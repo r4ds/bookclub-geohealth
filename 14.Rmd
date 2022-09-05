@@ -1,4 +1,4 @@
-# Geospatial health
+# Interactive dashboards with flexdashboard and Shiny
 
 **Learning objectives:**
 

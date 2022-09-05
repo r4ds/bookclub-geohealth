@@ -1,4 +1,4 @@
-# Geospatial health
+# Spatio-temporal modeling of areal data. Lung cancer in Ohio
 
 **Learning objectives:**
 

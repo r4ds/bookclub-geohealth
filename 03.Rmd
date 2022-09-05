@@ -1,4 +1,4 @@
-# Geospatial health
+# Bayesian inference and INLA
 
 **Learning objectives:**
 

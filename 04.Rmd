@@ -1,4 +1,4 @@
-# Geospatial health
+# The R-INLA package
 
 **Learning objectives:**
 

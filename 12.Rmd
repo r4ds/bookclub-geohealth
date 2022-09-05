@@ -1,4 +1,4 @@
-# Geospatial health
+# Building a dashboard to visualize spatial data with flexdashboard
 
 **Learning objectives:**
 

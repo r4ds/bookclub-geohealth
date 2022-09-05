@@ -1,4 +1,4 @@
-# Geospatial health
+# Spatio-temporal modeling of geostatistical data. Air pollution in Spain
 
 **Learning objectives:**
 

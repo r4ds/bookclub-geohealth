@@ -1,4 +1,4 @@
-# Geospatial health
+# Introduction to R Markdown
 
 **Learning objectives:**
 

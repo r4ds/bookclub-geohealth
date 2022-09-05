@@ -1,4 +1,4 @@
-# Geospatial health
+# Building a Shiny app to upload and visualize spatio-temporal data
 
 **Learning objectives:**
 

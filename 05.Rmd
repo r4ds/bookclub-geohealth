@@ -1,4 +1,4 @@
-# Geospatial health
+# Areal data
 
 **Learning objectives:**
 

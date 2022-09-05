@@ -1,4 +1,4 @@
-# Geospatial health
+# Spatial modeling of geostatistical data. Malaria in The Gambia
 
 **Learning objectives:**
 

@@ -1,4 +1,4 @@
-# Geospatial health
+# Geostatistical data
 
 **Learning objectives:**
 

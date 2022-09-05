@@ -1,4 +1,4 @@
-# Geospatial health
+# Disease surveillance with SpatialEpiApp
 
 **Learning objectives:**
 

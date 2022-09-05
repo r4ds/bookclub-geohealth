@@ -5,8 +5,9 @@
 .DS_Store
 _book
 _bookdown_files
-bookclub-BOOKABBR.Rmd
-bookclub-BOOKABBR.html
-bookclub-BOOKABBR.knit.md
-bookclub-BOOKABBR_files
+bookclub-geohealth.Rmd
+bookclub-geohealth.html
+bookclub-geohealth.knit.md
+bookclub-geohealth_files
 libs
+*.html

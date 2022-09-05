@@ -1,4 +1,4 @@
-# Geospatial health
+# Spatial modeling of areal data. Lip cancer in Scotland
 
 **Learning objectives:**
 
