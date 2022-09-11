@@ -1,9 +1,5 @@
 # R4DS Geospatial Health Data: Modeling and Visualization with R-INLA and Shiny Book Club
 
-ALSO CONFIRM THE MEETING TIME INFO BELOW AND DELETE THIS SENTENCE.
-
-ALSO ADD PLACEHOLDERS FOR ALL CHAPTERS BY COPYING 01.Rmd (IDEALLY ALSO UPDATE TITLES WITHIN THE FILES), THEN DELETE THIS SENTENCE.
-
 Welcome to the R4DS Geospatial Health Data: Modeling and Visualization with R-INLA and Shiny Book Club!
 
 We are working together to read [_Geospatial Health Data: Modeling and Visualization with R-INLA and Shiny_](https://www.paulamoraga.com/book-geospatial/) by Paula Moraga (Chapman & Hall, copyright 2020, [9780367357955](https://www.routledge.com/Geospatial-Health-Data-Modeling-and-Visualization-with-R-INLA-and-Shiny/Moraga/p/book/9780367357955)).
@@ -14,7 +10,7 @@ As we read, we are producing [notes about the book](https://r4ds.io/geohealth).
 
 If you would like to present, please see the sign-up sheet for your cohort (linked below, and pinned in the [#book_club-geohealth](https://rfordatascience.slack.com/archives/C0410B77DRT) channel on Slack)!
 
-- [Cohort 1](https://docs.google.com/spreadsheets/d/1OD_RurkwgpdapgvEdH252-R8TtimaO7uXuCVjwxAHFE/edit?usp=sharing) (started STARTDATE): [BOOKDAYS, BOOKTIMECST CST/CDT](TIMEANDDATEURL) | [meeting videos](https://youtube.com/playlist?list=PL3x6DOfs2NGhXMiZPIzZiwmMNiAGJLjna)
+- [Cohort 1](https://docs.google.com/spreadsheets/d/1OD_RurkwgpdapgvEdH252-R8TtimaO7uXuCVjwxAHFE/edit?usp=sharing) (started 2022-09-17): [Saturdays, 10:00 CST/CDT](https://www.timeanddate.com/worldclock/converter.html?iso=20220917T150000&p1=24&p2=179&p3=1440) | [meeting videos](https://youtube.com/playlist?list=PL3x6DOfs2NGhXMiZPIzZiwmMNiAGJLjna)
 
 <hr>
 
