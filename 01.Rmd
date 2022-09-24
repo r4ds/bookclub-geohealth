@@ -108,17 +108,6 @@ b. https://github.com/r4ds/bookclub-geohealth
 c. https://missing.csail.mit.edu/2020/version-control/   
 
 
-## Default .Rmd
-
-**Learning objectives:**
-
-- THESE ARE NICE TO HAVE BUT NOT ABSOLUTELY NECESSARY
-
-## SLIDE 1
-
-- ADD SLIDES AS SECTIONS (`##`).
-- TRY TO KEEP THEM RELATIVELY SLIDE-LIKE; THESE ARE NOTES, NOT THE BOOK ITSELF.
-
 ## Meeting Videos
 
 ### Cohort 1
