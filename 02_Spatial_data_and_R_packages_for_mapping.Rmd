@@ -15,8 +15,19 @@ Type of Spatial data:
 - geostatistical
 - point patterns
 
-```{r echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+```{r 02-Spatial-data-and-R-packages-for-mapping-1, message=FALSE, warning=FALSE, paged.print=FALSE}
 library(tidyverse)
+library(sf)
+library(rgdal)
+library(viridis)
+library(geoR)
+library(cholera)
+library(mapview)
+library(leaflet)
+library(leafsync)
+library(RColorBrewer)
+library(tmap)
+library(knitr)
 ```
 
 Packages used:
@@ -48,20 +59,16 @@ The domain $D$ is **fixed** (of regular or irregular shape) and made of finite n
 - census tract
 - pixels
 
-```{r echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
-require(sf)
-require(ggplot2)
-require(viridis)
+```{r 02-Spatial-data-and-R-packages-for-mapping-2, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
 
-nc <- st_read(system.file("shape/nc.shp", package = "sf"),
+nc <- sf::st_read(system.file("shape/nc.shp", package = "sf"),
   quiet = TRUE
 )
 
 
-
 ggplot(data = nc, aes(fill = SID74)) + 
   geom_sf() +
-  scale_fill_viridis() + 
+  viridis::scale_fill_viridis() + 
   labs(title="Number of sudden infant deaths",
        subtitle="counties of North Carolina, USA, in 1974") +
   theme_bw()
@@ -77,8 +84,9 @@ The domain $D$ is a **continuous fixed**:
 
 Data represent the average rainfall measurements for the period May-June (dry season) over different years collected at 143 recording stations throughout Paraná state, Brazil.
 
-```{r eval=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
-require(geoR)
+```{r 02-Spatial-data-and-R-packages-for-mapping-3, eval=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+geoR::parana%>%head
 
 data.frame(cbind(parana$coords, Rainfall = parana$data))
 
@@ -99,8 +107,8 @@ ggplot(data.frame(cbind(parana$coords, Rainfall = parana$data)))+
 The domain $D$ in point patterns is **random**.
 
 
-```{r}
-library(cholera)
+```{r 02-Spatial-data-and-R-packages-for-mapping-4}
+
 rng <- cholera::mapRange()
 
 
@@ -112,7 +120,7 @@ plot(fatalities[, c("x", "y")],
   axes = FALSE, xlab = "", ylab = ""
 )
 addRoads()
-?cholera::addRoads()
+# ?cholera::addRoads()
 ```
 
 
@@ -129,7 +137,7 @@ What the CRS do?
 Locations can be:
 
 - **unprojected** (geographic reference systems) use **longitude and latitude**
-```{r}
+```{r 02-Spatial-data-and-R-packages-for-mapping-5}
 world<-map_data("world")
 ggplot(world,aes(long,lat,group=group))+
   geom_polygon(fill="#e1a95f",color="grey30",size=0.3)+
@@ -140,7 +148,7 @@ ggplot(world,aes(long,lat,group=group))+
 
 - **projected** use **easting and northing Cartesian coordinates** 
 
-```{r}
+```{r 02-Spatial-data-and-R-packages-for-mapping-6}
 world<-map_data("world")
 ggplot(world,aes(long,lat,group=group))+
   geom_polygon(fill="#e1a95f",color="grey30",size=0.3)+
@@ -178,7 +186,7 @@ Elements in the CRS **proj4 attributes**:
 - units = m (if meters)
 
 To check all the available CRS in R:
-```{r}
+```{r 02-Spatial-data-and-R-packages-for-mapping-7}
 # View(rgdal::make_EPSG())
 ```
 
@@ -186,9 +194,7 @@ To check all the available CRS in R:
 [EPSG](https://en.wikipedia.org/wiki/EPSG_Geodetic_Parameter_Dataset) **Geodetic Parameter Dataset** (also EPSG registry) is a public registry of geodetic datums, spatial reference systems, Earth ellipsoids, coordinate transformations and related units of measurement. Originally created by **European Petroleum Survey Group (EPSG)**.
 
 
-```{r message=FALSE, warning=FALSE, paged.print=FALSE}
-library(rgdal)
-
+```{r 02-Spatial-data-and-R-packages-for-mapping-8, message=FALSE, warning=FALSE, paged.print=FALSE}
 # setting the projections
 # proj4string(d) <- CRS(projection)
 
@@ -216,17 +222,17 @@ Consists of a collection of related files that have different extensions and a c
 
 A shapefile has three mandatory files with extensions .shp, .shx, and .dbf
 
-```{r}
+```{r 02-Spatial-data-and-R-packages-for-mapping-9}
 knitr::include_graphics("img/02-shp.png")
 ```
 
 
-```{r}
+```{r 02-Spatial-data-and-R-packages-for-mapping-10}
 # name of the shapefile of North Carolina of the sf package
 nameshp <- system.file("shape/nc.shp", package = "sf")
 # read shapefile with readOGR()
-library(rgdal)
-map <- readOGR(nameshp, verbose = FALSE)
+
+map <- rgdal::readOGR(nameshp, verbose = FALSE)
 
 class(map)
 
@@ -237,45 +243,41 @@ head(map@data)
 ```
 
 
-```{r}
+```{r 02-Spatial-data-and-R-packages-for-mapping-11}
 plot(map)
 ```
 
-```{r}
+```{r 02-Spatial-data-and-R-packages-for-mapping-12}
 # read shapefile with st_read()
-library(sf)
-map <- st_read(nameshp, quiet = TRUE)
+map <- sf::st_read(nameshp, quiet = TRUE)
 
 class(map)
 ```
 
-```{r}
+```{r 02-Spatial-data-and-R-packages-for-mapping-13}
 head(map)
 ```
 
-```{r}
+```{r 02-Spatial-data-and-R-packages-for-mapping-14}
 plot(map)
 ```
 
 ## Making maps with R
 ### ggplot2
-```{r}
-require(ggplot2)
-
+```{r 02-Spatial-data-and-R-packages-for-mapping-15}
 map <- st_as_sf(map)
 ggplot(map) + geom_sf(aes(fill = SID74)) + theme_bw()
 ```
 
 
-```{r}
-require(viridis)
+```{r 02-Spatial-data-and-R-packages-for-mapping-16}
 map <- st_as_sf(map)
 ggplot(map) + geom_sf(aes(fill = SID74)) +
   scale_fill_viridis() + theme_bw()
 ```
 
 
-```{r eval=TRUE}
+```{r 02-Spatial-data-and-R-packages-for-mapping-17, eval=TRUE}
 # png("plot.png")
 ggplot(map) + 
   geom_sf(aes(fill = SID74)) +
@@ -285,17 +287,15 @@ ggplot(map) +
 ```
 
 ### leaflet
-```{r}
-st_crs(map)
+```{r 02-Spatial-data-and-R-packages-for-mapping-18}
+sf::st_crs(map)
 ```
 
 
-```{r}
-library(leaflet)
-
+```{r 02-Spatial-data-and-R-packages-for-mapping-19}
 pal <- colorNumeric("YlOrRd", domain = map$SID74)
 
-leaflet(map) %>%
+leaflet::leaflet(map) %>%
   addTiles() %>%
   addPolygons(
     color = "white", fillColor = ~ pal(SID74),
@@ -305,15 +305,13 @@ leaflet(map) %>%
 ```
 
 ### mapview
-```{r}
-library(mapview)
-mapview(map, zcol = "SID74")
+```{r 02-Spatial-data-and-R-packages-for-mapping-20}
+mapview::mapview(map, zcol = "SID74")
 ```
 
-```{r}
-library(RColorBrewer)
-pal <- colorRampPalette(brewer.pal(9, "YlOrRd"))
-mapview(map,
+```{r 02-Spatial-data-and-R-packages-for-mapping-21}
+pal <- colorRampPalette(RColorBrewer::brewer.pal(9, "YlOrRd"))
+mapview::mapview(map,
   zcol = "SID74",
   map.types = "CartoDB.DarkMatter",
   col.regions = pal
@@ -321,8 +319,8 @@ mapview(map,
 ```
 
 
-```{r}
-require(leafsync)
+```{r 02-Spatial-data-and-R-packages-for-mapping-22}
+
 m74 <- mapview(map, zcol = "SID74")
 m79 <- mapview(map, zcol = "SID79")
 m <- leafsync::sync(m74, m79) #(not from mapview)
@@ -331,9 +329,8 @@ m
 
 ### tmap
 [Vignette](https://cran.r-project.org/web/packages/tmap/vignettes/tmap-getstarted.html)
-```{r}
-library(tmap)
-tmap_mode("view")
+```{r 02-Spatial-data-and-R-packages-for-mapping-23}
+tmap::tmap_mode("view")
 tm_shape(map) + tm_polygons("SID74")
 ```
 
