@@ -14,5 +14,6 @@ Depends:
 Imports: 
     bookdown,
     gapminder,
+    maps,
     rmarkdown,
     tidyverse
