@@ -19,6 +19,7 @@ Imports:
     knitr,
     leaflet,
     leafsync,
+    maps,
     mapview,
     RColorBrewer,
     rgdal,
