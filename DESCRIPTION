@@ -13,6 +13,20 @@ Depends:
     R (>= 3.1.0)
 Imports: 
     bookdown,
+    cholera,
     gapminder,
+    geoR,
+    knitr,
+    leaflet,
+    leafsync,
+    mapproj,
+    maps,
+    maptools,
+    mapview,
+    RColorBrewer,
+    rgdal,
     rmarkdown,
-    tidyverse
+    sf,
+    tidyverse,
+    tmap,
+    viridis
