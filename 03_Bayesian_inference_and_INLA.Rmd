@@ -20,7 +20,7 @@ We need to specify:
 
 * a probability distribution called a likelihood :
 
-```{tikz figure1, echo = FALSE, fig.cap = "Likelihood", fig.ext = 'vsg', engine.opts = list(template = "standalone_1x5in.tex")}
+```{tikz figure1, eval=FALSE ,echo = FALSE, fig.cap = "Likelihood", fig.ext = 'vsg', engine.opts = list(template = "standalone_1x5in.tex")}
 \begin{equation*}
     \eqnmark{proba}{\pi}(\eqnmark{data}{y} | \eqnmark{param}{\theta}) 
 \end{equation*}
@@ -28,15 +28,20 @@ We need to specify:
 \annotate[yshift=-1em]{below,left}{data}{data: $(y_1, ..., y_n)$ }
 \annotate[yshift=-1em]{below,right}{param}{Parameters (unknown)}
 ```
+
+![Likelihood](figure/figure1-1.vsg)
+
 * a prior distribution:
 
-```{tikz figure2, echo = FALSE, fig.cap = "Prior distribution", fig.ext = 'vsg', engine.opts = list(template = "standalone_1x5in.tex")}
+```{tikz figure2, eval=FALSE, echo = FALSE, fig.cap = "Prior distribution", fig.ext = 'vsg', engine.opts = list(template = "standalone_1x5in.tex")}
 \begin{equation*}
     \pi(\eqnmark{param}{\theta} | \eqnmark{hyperparam}{\eta}) 
 \end{equation*}
 \annotate[yshift=1em]{above,left}{param}{Parameters}
 \annotate[yshift=-1em]{below,right}{hyperparam}{Hyperparameters}
 ```
+
+![Prior](figure/figure2-1.vsg)
 
 Then you have 2 approach :
 
@@ -46,7 +51,7 @@ Then you have 2 approach :
 
 If we know $\eta$ we can do our inference on $\theta$ using Bayes's Theorem:
 
-```{tikz figure3, echo = FALSE, fig.cap = "Bayes's Theorem", fig.ext = 'vsg', engine.opts = list(template = "standalone_1x5in.tex")}
+```{tikz figure3, eval=FALSE, echo = FALSE, fig.cap = "Bayes's Theorem", fig.ext = 'vsg', engine.opts = list(template = "standalone_1x5in.tex")}
 \begin{equation*}
 	\eqnmark{post}{\pi(\theta | y)} = \frac{\pi(y,\theta)}{\pi(y)}  = \frac{\eqnmark{lik}{\pi(y|\theta)} \eqnmark{prior}{\pi(\theta)}} {\eqnmark{marglik}{\int\pi(y|\theta)\pi(\theta)d\theta}}
 \end{equation*}
@@ -55,6 +60,9 @@ If we know $\eta$ we can do our inference on $\theta$ using Bayes's Theorem:
 \annotate[yshift=1em]{above,left}{post}{posterior}
 \annotate[yshift=-1em]{below,right}{marglik}{marginal likelihood}
 ```
+
+![Bayes's Theorem](figure/figure3-1.vsg)
+
 Quick reminder: $P(A\cap B) = P(A|B)P(B)$ 
 
 The denominator $\pi(y) = \int\pi(y|\theta)\pi(\theta)d\theta$ is the  marginal likelihood of the data $y$. To get a probability we need to make $\pi(\theta|y)$ bound between 0 and 1 this is the goal of the marginal likelihood also know as *normalizing constants*. 
@@ -166,7 +174,7 @@ Why are we using precision instead of variance (source [wiki](https://en.wikiped
 
 We are assuming that the mean $\mu_i$ of our observations $Y_i$ can be linked to a linear predictor (ex: $\mu_i = g^{-1}(\eta_i)$ ): 
 
-```{tikz figure4, echo = FALSE,  fig.ext = 'vsg', engine.opts = list(template = "standalone_1x5in.tex")}
+```{tikz figure4, eval=FALSE, echo = FALSE,  fig.ext = 'vsg', engine.opts = list(template = "standalone_1x5in.tex")}
 \begin{equation*}
 \eqnmark{linear}{\eta_i} = \eqnmark{inter}{\alpha} + \eqnmark{eff_cov}{\displaystyle\sum_{k=1}^{\eta_\beta}\beta_k z_{ki}} + \eqnmark{random_eff}{\displaystyle\sum_{j=1}^{\eta_f}f^{j} (u_{ju}}
 \end{equation*}
@@ -175,7 +183,7 @@ We are assuming that the mean $\mu_i$ of our observations $Y_i$ can be linked to
 \annotate[yshift=-1em]{below,left}{eff_cov}{linear effects of covariates: $\{\beta_k\}$on response}
 \annotate[yshift=-1em]{below,right}{random_eff}{set $\{f^{j}(.)\}$ of random effects on covariates: $u_{ji}$ }
 ```
-
+![](figure/figure4-1.vsg)
 
 $$ (\alpha\{\beta_k\}, \{f^{(j)}\})|\theta \sim N(\mu(\theta), Q(\theta)^{-1}) $$
 
