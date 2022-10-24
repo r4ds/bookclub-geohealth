@@ -35,4 +35,5 @@ Imports:
     tmap,
     viridis
 Remotes:
-    url: https://inla.r-inla-download.org/R/stable
+    url::https://github.com/hrue/r-inla/archive/refs/heads/stable.zip
+
