@@ -2,12 +2,445 @@
 
 **Learning objectives:**
 
-- THESE ARE NICE TO HAVE BUT NOT ABSOLUTELY NECESSARY
+-   Learn how to work with **Aereal data**
+-   How to compute neighborhood matrices, expected counts, and SIRs.
+-   How to fit spatial and spatio-temporal disease risk models using the R-INLA package
 
-## SLIDE 1
+## Introduction
 
-- ADD SLIDES AS SECTIONS (`##`).
-- TRY TO KEEP THEM RELATIVELY SLIDE-LIKE; THESE ARE NOTES, NOT THE BOOK ITSELF.
+This chapter is about Aereal data. We will be looking at some real world examples provided by the {SpatialEpi} package, and do some math for measuring disease risks before building the model.
+
+Examples of **Areal data** are:
+
+-   the number of cancer cases in counties
+-   the number of road accidents in provinces
+-   the proportion of people living in poverty in census tracts.
+
+**Measure of disease risk in areas**:
+
+-   standardized incidence ratio (SIR) which is defined as the ratio of the observed to the expected counts
+-   Bayesian hierarchical models
+
+**Spatial model: Besag-York-Mollié (BYM) model**
+
+-   autocorrelation in temporal and spatial structure
+-   spatial random effects
+
+**Data used**: lung cancer in Pennsylvania counties, USA, from the {SpatialEpi} package
+
+## Spatial neighborhood matrices
+
+Packages needed:
+
+```{r 05-Aereal-data-1, message=FALSE, warning=FALSE, paged.print=FALSE}
+library(tidyverse)
+library(sf)
+library(spdep)
+library(SpatialEpi)
+library(INLA)
+library(cowplot)
+```
+
+A **spatial model** is a particular type of model as it takes consideration of autocorrelation between spatial points and so some *weights* are considered to identify the points' proximity.
+
+$$y=\sum_{i=1}^n{w_if(x_i)}$$
+
+$\mathit{W}$ is the **proximity matrix** or the **inverse distance between areas** and spatially connects areas $i$ and $j$, its elements $(i,j)$ , are:
+
+$$i=(1,...,n)$$ $$j=(1,...,m)$$
+
+$$W=\begin{bmatrix}
+(1,1) & (1,2) & ... & (1,j)\\ 
+(2,1) & ... & ... & (2,j)\\ 
+... & ... & ... & ...\\ 
+(i,1) & ...& ... &(i,j)\\
+\end{bmatrix}$$
+
+
+The most simple cases are:
+
+$$w_{i,j}=\left\{\begin{matrix}
+1 & \text{ if i and j share same boundaries}\\
+0 & \text{ otherwise}
+\end{matrix}\right.$$
+
+
+As an alternative, a **standardized matrix** can be used, adjusted for the total number of neighbors in each area:
+
+$$w_{std,i,j}=\frac{w_{i,j}}{\sum_{j=1}^n{w_{ij}}}$$
+
+
+Let's have a look at the data: **Lung Cancer in Pennsylvania** 
+```{r 05-Aereal-data-2}
+# install.packages("SpatialEpi")
+# library(SpatialEpi)
+
+map <- pennLC$spatial.polygon
+plot(map)
+```
+
+And construct the neighbors list for each county:
+
+```{r 05-Aereal-data-3,comment=""}
+# install.packages("spdep")
+# library(spdep)
+nb <- spdep::poly2nb(map)
+nb%>%class
+head(nb,3)
+```
+
+
+
+```{r 05-Aereal-data-4, comment=""}
+d <- data.frame(county = names(map), 
+                neigh = rep(0, length(map)))
+
+rownames(d) <- names(map)
+
+map <- SpatialPolygonsDataFrame(map, d, match.ID = TRUE)
+map$neigh[nb[[2]]] <- 1
+map$neigh[nb[[44]]] <- 1
+map$neigh[nb[[58]]] <- 1
+map%>%as_tibble()%>%head
+```
+
+```{r 05-Aereal-data-5}
+coord <- coordinates(map)
+map$long <- coord[, 1]
+map$lat <- coord[, 2]
+map$ID <- 1:dim(map@data)[1]
+map@proj4string
+map%>%as_tibble()%>%head
+```
+
+```{r 05-Aereal-data-6}
+# install.packages("sf")
+# library(sf)
+mapsf <- sf::st_as_sf(map)
+```
+
+```{r 05-Aereal-data-7, fig.cap="Neighbors of areas 2, 44 and 58 of Pennsylvania"}
+# ggplot(mapsf)+
+#   geom_sf()
+
+ggplot(mapsf) + 
+  geom_sf(aes(fill = as.factor(neigh))) +
+  geom_text(aes(long, lat, label = ID), color = "white") +
+  guides(fill = "none") +
+  theme_bw() 
+```
+
+
+## Standardized incidence ratio
+
+Estimation of the **disease risk estimates in each of the areas**
+
+
+$$SIR_i=\frac{Y_i}{E_i}$$ $E_i$ is the **expected counts** or the expected total number of cases, is the sum of the multiplication of the rate of the number of cases divided by population in $j$  $r_j^{(s)}$, and $n_j^{(i)}$ the population in stratum $j$ of area $i$.
+
+$$E_i=\sum_{j=1}^m{r_{j}^{(s)}n_{j}^{(i)}}$$
+
+$$SIR_i=\begin{Bmatrix}
+>1 & \text{higher} \\ 
+=1 & \text{equal} \\
+<1 & \text{lower} 
+\end{Bmatrix} \text{risk than expected in area i}$$
+
+When applied to mortality data, the ratio is known as the **standardized mortality ratio (SMR)**.
+
+Example:
+
+```{r 05-Aereal-data-8}
+d <- pennLC$data%>%
+  group_by(county) %>% 
+  summarize(Y = sum(cases))
+
+head(d)
+```
+
+```{r 05-Aereal-data-9}
+pennLC$data <- pennLC$data %>%
+  arrange(county,race,gender,age)
+```
+
+```{r 05-Aereal-data-10}
+E <- expected(
+  population = pennLC$data$population,
+  cases = pennLC$data$cases, n.strata = 16
+)
+```
+
+
+```{r 05-Aereal-data-11}
+d$E <- E[match(d$county, unique(pennLC$data$county))]
+
+
+head(d)
+```
+
+```{r 05-Aereal-data-12}
+d$SIR <- d$Y / d$E
+```
+
+```{r 05-Aereal-data-13}
+head(d)
+```
+
+```{r 05-Aereal-data-14}
+map <- merge(map, d)
+```
+
+```{r 05-Aereal-data-15}
+mapsf <- st_as_sf(map)
+```
+
+```{r 05-Aereal-data-16, fig.cap="SIR of lung cancer in Pennsylvania counties"}
+ggplot(mapsf) + geom_sf(aes(fill = SIR)) +
+  scale_fill_gradient2(
+    midpoint = 1, low = "blue", mid = "white", high = "red"
+  ) +
+  theme_bw()
+```
+
+## Spatial small area disease risk estimation
+
+$$Y\sim{Po(E_{i} \theta_{i})}, i=1,..,n,$$ $$log(\theta_i)=\alpha+u_i+v_i$$
+
+$\alpha$ is the overall risk, $u_i$ the random effect in area i, and $v_i$ is some noise $v_i\sim{N(0,\sigma_v^{2})}$
+
+To include covariates to quantify risk factors and other random effects:
+
+$\alpha=\mathbf{d_i \beta}$
+
+The **Besag-York-Mollié (BYM) model** (Besag, York, and Mollié 1991) $u_i$, which is the spatial random effect, has a **Conditional Autoregressive (CAR)** distribution:
+
+$$u_i|\mathbf{u_{-i}}\sim{N(\bar{u_{\sigma_i},\frac{\sigma_u^2}{n_{\sigma_i}}})}$$
+
+$\bar{u}_{\sigma_i}=n_{\sigma_i}^{-1}\sum_{j\epsilon\sigma_i}{u_j}$
+
+In R-INLA, the formula of the BYM model is specified as follows:
+
+$$Y\sim{f_1(besag)+f_2(iid)}$$
+
+```{r 05-Aereal-data-17}
+formula <- Y ~
+  f(idareau, model = "besag", # CAR distribution
+    graph = g,                # neighborhood structure
+    scale.model = TRUE) +
+  f(idareav, model = "iid")
+```
+
+(The BYM model can also be specified with the model "bym")
+
+### Spatial modeling of lung cancer in Pennsylvania
+
+To calculate the relative risks of lung cancer in the Pennsylvania counties, a new parametrization of the BYM model is called BYM2, **bym2** model, it defines the components as:
+
+$$\mathbf{b}=\frac{1}{\sqrt{\pi_b}(\sqrt{1-\phi}\mathit{v}_*+\sqrt{\phi}\mathit{u_*})}$$
+
+$\pi_b$ is the precision parameter and controls the marginal variance of the weighted sum of $\mathit{u_*}$ and $\mathit{v_*}$, $\phi$ is between 0 and 1, and measures the proportion of the marginal variance explained by $\mathit{u_*}$
+
+$$\text{BYM2}=\left\{\begin{matrix}
+\phi=1 & \text{one spatial model} \\ 
+ \phi=0 & \text{one unstructured spatial noise}
+\end{matrix}\right.$$
+
+$$Y\sim{f(.)}$$
+
+```{r 05-Aereal-data-18}
+formula <- Y ~ f(idarea, # is the index variable of the area
+                 model = "bym2", 
+                 graph = g)
+```
+
+```{r 05-Aereal-data-19}
+map$idarea <- 1:nrow(map@data)
+```
+
+As a **rule of thumb**, given the PC prior for the marginal precision $\pi_b$:
+
+$$P((1/\sqrt{\pi_b})>U)=\alpha$$
+
+we use: $$U=0.5/0.31$$ and $$\alpha=0.01$$
+
+```{r 05-Aereal-data-20}
+prior <- list(
+  prec = list(
+    prior = "pc.prec",
+    param = c(0.5 / 0.31, 0.01)),
+  phi = list(
+    prior = "pc",
+    param = c(0.5, 2 / 3))
+  )
+```
+
+```{r 05-Aereal-data-21}
+
+nb <- poly2nb(map)
+head(nb)
+```
+
+```{r 05-Aereal-data-22}
+spdep::nb2INLA("map.adj", nb)
+
+g <- INLA::inla.read.graph(filename = "map.adj")
+```
+
+```{r 05-Aereal-data-23}
+# it requires BiocManager::install("Rgraphviz")
+plot(g)
+```
+
+```{r 05-Aereal-data-24}
+formula <- Y ~ f(idarea, 
+                 model = "bym2", 
+                 graph = g, 
+                 hyper = prior)
+```
+
+And fit the model:
+
+```{r 05-Aereal-data-25, message=FALSE, warning=FALSE, paged.print=FALSE}
+res <- inla(formula,
+  family = "poisson", 
+  data = map@data,
+  E = E, 
+  control.predictor = list(compute = TRUE)
+)
+```
+
+```{r 05-Aereal-data-26}
+summary(res)
+```
+
+```{r 05-Aereal-data-27}
+head(res$summary.fitted.values)
+```
+
+```{r 05-Aereal-data-28}
+map$RR <- res$summary.fitted.values[, "mean"]
+map$LL <- res$summary.fitted.values[, "0.025quant"]
+map$UL <- res$summary.fitted.values[, "0.975quant"]
+
+summary(map@data[, c("RR", "LL", "UL")])
+```
+
+```{r 05-Aereal-data-29}
+mapsf <- st_as_sf(map)
+
+gRR <- ggplot(mapsf) + geom_sf(aes(fill = RR)) +
+  scale_fill_gradient2(
+    midpoint = 1, low = "blue", mid = "white", high = "red",
+    limits = c(0.7, 1.5)
+  ) +
+  theme_bw()
+```
+
+```{r 05-Aereal-data-30}
+gLL <- ggplot(mapsf) + geom_sf(aes(fill = LL)) +
+  scale_fill_gradient2(
+    midpoint = 1, low = "blue", mid = "white", high = "red",
+    limits = c(0.7, 1.5)
+  ) +
+  theme_bw()
+```
+
+```{r 05-Aereal-data-31}
+gUL <- ggplot(mapsf) + geom_sf(aes(fill = UL)) +
+  scale_fill_gradient2(
+    midpoint = 1, low = "blue", mid = "white", high = "red",
+    limits = c(0.7, 1.5)
+  ) +
+  theme_bw()
+```
+
+```{r 05-Aereal-data-32}
+cowplot::plot_grid(gRR, gLL, gUL, ncol = 1)
+```
+
+The posterior mean of the BYm2 random effect $\mathbf{b}$:
+
+```{r 05-Aereal-data-33}
+mapsf$re <- res$summary.random$idarea[1:67, "mean"]
+
+ggplot(mapsf) + geom_sf(aes(fill = re)) +
+  scale_fill_gradient2(
+    midpoint = 0, low = "blue", mid = "white", high = "red"
+  ) +
+  theme_bw()
+```
+
+## Spatio-temporal small area disease risk estimation
+
+$$Y_{ij}\sim{Po(E_{ij}\phi_{ij})}$$
+
+A **Spatio-temporal model with parametric time trends**
+
+$$log(\phi_{ij}=\alpha+\mathit{u_i}+\mathit{v_i}+(\beta+\delta_i) \times \mathit{t_j}$$
+
+$$Y\sim f(bym)+f(iid)+ \text{idtime}$$
+
+```{r 05-Aereal-data-34}
+formula <- Y ~ 
+  f(idarea,    # area index
+    model = "bym", 
+    graph = g) + 
+  f(idarea1,   # area index
+    idtime,   
+    model = "iid") + 
+  idtime.      # time index
+```
+
+-   `f(idarea,model = "bym", graph = g)` is the area random effect $\mathit{u_i}+\mathit{v_i}$.
+
+-   `f(idarea1, idtime, model = "iid")`. is the differential time trend $\delta_i \times \mathit{t}_j$
+
+-   `idtime` is the global trend $\beta \times \mathit{t}_j$
+
+An alternative is from **Knorr-Held (2000)** specify models with interaction between space and time:
+
+```{r 05-Aereal-data-35}
+formula <- Y ~ f(idarea, model = "bym", graph = g) +
+  f(idtime, model = "rw2") +
+  f(idtime1, model = "iid") +
+  f(idareatime, model = "iid")
+```
+
+```{r 05-Aereal-data-36}
+# f(idareatime, model = "iid")
+```
+
+```{r 05-Aereal-data-37, eval=FALSE}
+f(idtime,
+  model = "iid",
+  group = idarea, 
+  ontrol.group = list(model = "besag", graph = g)
+)
+```
+
+```{r 05-Aereal-data-38, eval=FALSE}
+f(idarea,
+  model = "iid",
+  group = idtime, control.group = list(model = "rw2")
+)
+```
+
+```{r 05-Aereal-data-39, eval=FALSE}
+f(idarea,
+  model = "besag", graph = g,
+  group = idtime, control.group = list(model = "rw2")
+)
+```
+
+## Conclusions
+
+Things to consider:
+
+-   Misaligned Data Problem (MIDP)
+-   Modifiable Areal Unit Problem (MAUP)
+    -   ecological inference problem:
+        -   aggregation bias
+        -   specification bias
 
 ## Meeting Videos
 
@@ -16,9 +449,13 @@
 `r knitr::include_url("https://www.youtube.com/embed/URL")`
 
 <details>
-<summary> Meeting chat log </summary>
 
-```
-LOG
-```
+<summary>
+
+Meeting chat log
+
+</summary>
+
+    LOG
+
 </details>

@@ -14,8 +14,10 @@ Depends:
 Imports: 
     bookdown,
     cholera,
+    cowplot,
     gapminder,
     geoR,
+    INLA,
     knitr,
     leaflet,
     leafsync,
@@ -27,6 +29,8 @@ Imports:
     rgdal,
     rmarkdown,
     sf,
+    SpatialEpi,
+    spdep,
     tidyverse,
     tmap,
     viridis
