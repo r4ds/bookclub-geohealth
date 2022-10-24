@@ -15,6 +15,7 @@ Imports:
     bookdown,
     cholera,
     cowplot,
+    digest,
     gapminder,
     geoR,
     INLA,
