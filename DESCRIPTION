@@ -12,8 +12,10 @@ URL: https://r4ds.github.io/bookclub-geohealth, https://github.com/r4ds/bookclub
 Depends:
     R (>= 3.1.0)
 Imports: 
+    BiocManager,
     bookdown,
     cholera,
+    cowplot,
     gapminder,
     geoR,
     knitr,
@@ -25,8 +27,16 @@ Imports:
     mapview,
     RColorBrewer,
     rgdal,
+    Rgraphviz,
     rmarkdown,
     sf,
+    SpatialEpi,
+    spdep,
     tidyverse,
     tmap,
     viridis
+Depends:
+    INLA
+Suggests:
+    INLA
+Additional_repositories: https://inla.r-inla-download.org/R/stable
