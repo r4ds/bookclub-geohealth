@@ -34,3 +34,4 @@ Imports:
     tidyverse,
     tmap,
     viridis
+Additional_repositories: https://inla.r-inla-download.org/R/stable/
