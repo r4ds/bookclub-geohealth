@@ -2,12 +2,213 @@
 
 **Learning objectives:**
 
-- THESE ARE NICE TO HAVE BUT NOT ABSOLUTELY NECESSARY
+- Learning about the `inla()` function 
+    - basics argument  
+    - default set up and how to change it
+    - interacting with its output
+    
+- Useful functions in R-INLA    
 
-## SLIDE 1
+## Linear predictor (LP)
 
-- ADD SLIDES AS SECTIONS (`##`).
-- TRY TO KEEP THEM RELATIVELY SLIDE-LIKE; THESE ARE NOTES, NOT THE BOOK ITSELF.
+```{r}
+library(INLA)
+library(ggplot2)
+```
+
+
+1. step one: writing linear predictor as an R formula 
+
+$$Response \quad variable \sim fixed + random \quad effect$$
+
+Random effect are put inside `f()` with a name of model arguments ("iid")
+
+
+$$\eta_i = \beta_o + \beta_1x_1 + \beta_2x_2 + u_i $$
+
+$$u_i \sim N(0, \sigma^2_u) $$
+
+```{r eval=FALSE} 
+y ~ x1 + x2 + f(i, model = "iid")
+```
+
+
+```{r eval=FALSE} 
+y ~ 0 = b0 + x1 + x2 + f(i, model = "iid")
+```
+
+## Inla()
+
+Keys argument: 
+
+- `formula`
+
+- `data`
+
+- `family` : type of likelihhod distributon we want to use as model
+
+```{r}
+(inla.models()$likelihood)$poisson
+#inla.doc("poisson") # replace poisson with other family
+```
+
+- `control.compute` : take a list with "key = value" of other variable that should be computed. Example with deviance information criterion (DIC)
+
+- `control.predictor` : take a list that specify predictor variable (`link`) but also if marginal densities of LP should be computed
+
+
+## Priors specification
+
+```{r}
+(inla.models()$prior$normal)
+inla.doc("Normal")
+```
+
+
+You should always check the doc (or do yourself some cheat sheet) because like every software they could use other convention : use of precision instead of variance in $N()$. 
+
+INLA use some default setting but you can overwrite at:
+
+* the "default level":  `inla.set.control.fixed.default()`
+
+* Inside `inla()`: `control.fixed = prior.fixed` prior.fixed is a list
+
+The hyperparameters are specified in a list ("key=value") with the `hyper` arguments inside the `f()`: 
+
+- `inital`: where to start 
+
+- `prior`: prior distribution
+
+- `param`: vector of the parameters for distribution
+
+- `fixed`: fixed value or not
+
+
+You can use Penalized Complexity or PC priors. 
+
+
+## Example: mortality rates following surgery
+
+This is an illustration of what we seens previously but it also will add few important functions to help us analyze output of `inla()`.
+
+```{r}
+Surg
+```
+
+Here we want to investigate mortality rate (r)
+
+### Model
+
+$$Y_i \sim Binom(n_i, p_i), i = 1, .., 12$$
+
+$$logit(pi) = \alpha + u_i, u_i \sim N(o, \sigma^2) $$
+
+Reminder: logit is the log odds ($ln(\frac{p_i}{1 -p_i}$)
+
+Default prior for $\alpha \sim N(0, \frac{1}{\tau})$
+
+We will PC for $\u_i$ with 
+
+$P(\sigma > 1) = 0.01$
+
+Define prior as a list:
+
+```{r}
+prior.prec <- list(prec = list(prior = "pc.prec",
+                               param = c(1, 0.01)))
+```
+
+Define formula object:
+
+```{r}
+formula <- r ~ f(hospital, model = "iid", hyper = prior.prec)
+```
+
+Calling inla() :
+
+```{r}
+res <- inla(formula,
+  data = Surg,
+  family = "binomial", Ntrials = n,
+  control.predictor = list(compute = TRUE), # marginal densities of LP
+  control.compute = list(dic = TRUE) # DIC 
+)
+```
+
+### resuts!
+
+```{r}
+summary(res)
+```
+
+You can access specific part of the result using `$`
+
+```{r}
+res$summary.fixed
+```
+
+We asked `compute = TRUE` so we get : 
+
+- `summary.linear.predictor` : **df** with linear predictors
+
+- `summary.fitted.values` : **df** with fitted values obtained by transforming the linear predictors by the inverse of the link function (if like me you have trouble with log values)
+
+- `marginals.linear.predictor`: **list** with the posterior marginals of the linear predictors
+
+- `marginals.fitted.values`: **list** with the posterior marginals of the fitted values obtained by transforming the linear predictors by the inverse of the link function
+
+You can acces them like that:
+
+```{r}
+res$summary.fitted.values
+```
+
+Or using r-inla functions to manipulate them: 
+
+- `inla.L.marginal()` L is for "Letters":
+
+    * e for expectations 
+    * q for quantiles  
+    * s for spline smoothings  
+    * t for transform (if you want varianec instead of precision)  
+    * z for summary statistics
+
+
+```{r}
+library(ggplot2)
+alpha <- res$marginals.fixed[[1]]
+ggplot(data.frame(inla.smarginal(alpha)), aes(x, y)) +
+  geom_line() +
+  theme_bw()
+```
+
+```{r}
+marg.variance <- inla.tmarginal(function(x) 1/x,
+res$marginals.hyperpar$"Precision for hospital")
+
+ggplot(data.frame(inla.smarginal(marg.variance)), aes(x, y)) +
+  geom_line() +
+  theme_bw()
+```
+
+```{r, eval=FALSE}
+list_marginals <- res$marginals.fitted.values
+
+marginals <- data.frame(do.call(rbind, list_marginals))
+marginals$hospital <- rep(names(list_marginals),
+                           times = sapply(list_marginals, nrow))
+
+library(ggplot2)
+ggplot(marginals, aes(x = x, y = y)) + geom_line() +
+  facet_wrap(~ hospital) +
+  labs(x = "", y = "Density") +
+  geom_vline(xintercept = 0.1, col = "gray") +
+  theme_bw()
+```
+
+## Control variables to compute approximations
+
+`control.inla` = list(int.strategy = "grid")
 
 ## Meeting Videos
 
