@@ -27,6 +27,7 @@ Imports:
     rgdal,
     rmarkdown,
     sf,
+    SpatialEpi,
     tidyverse,
     tmap,
     viridis
