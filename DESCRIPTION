@@ -14,8 +14,11 @@ Depends:
 Imports: 
     bookdown,
     cholera,
+    cowplot,
     gapminder,
     geoR,
+    graph,
+    INLA,
     knitr,
     leaflet,
     leafsync,
@@ -34,3 +37,4 @@ Imports:
     tidyverse,
     tmap,
     viridis
+Additional_repositories: https://inla.r-inla-download.org/R/stable/
