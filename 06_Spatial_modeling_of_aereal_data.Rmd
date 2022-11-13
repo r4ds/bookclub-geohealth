@@ -2,12 +2,358 @@
 
 **Learning objectives:**
 
-- THESE ARE NICE TO HAVE BUT NOT ABSOLUTELY NECESSARY
+- Explore sp/sf data abstraction 
 
-## SLIDE 1
+- Practice spatial modelling for aerial data (SIR and BYM)
 
-- ADD SLIDES AS SECTIONS (`##`).
-- TRY TO KEEP THEM RELATIVELY SLIDE-LIKE; THESE ARE NOTES, NOT THE BOOK ITSELF.
+- Display result in tables, plots (ggplot2) and interactive map (leaflet)
+
+## Data set: wrangling 
+
+```{r loading lib}
+library(sp)
+library(SpatialEpi)
+library(sf)
+library(leaflet)
+```
+
+The data set cover Scoltland counties:
+
+- Observed and expected cases of lip cancer in males
+
+- % of opop in Agriculture, Fishing, Forestry (AFF)
+
+
+### Map of Scotland counties
+
+We will be using both `{sp}` and `{sf}` just for the sake of understanding: 
+
+```{r lodaing_ploting_data}
+data(scotland)
+map <- scotland$spatial.polygon
+plot(map)
+```
+
+The workflow in `{sp}` an start with getting all EPSG codes and proj4 fron `rgdal`:  
+
+```{r sp_proj}
+# sp
+codes <- rgdal::make_EPSG()
+codes[which(codes$code == "27700"), ]
+codes[codes$code == "4326",]
+# saving it for other purposes
+map_3 <- map_2 <-map
+# change in unit was done by "hand"
+proj4string(map) <- "+proj=tmerc +lat_0=49 +lon_0=-2
++k=0.9996012717 +x_0=400000 +y_0=-100000 +datum=OSGB36
++units=km +no_defs"
+```
+
+An other option if you want to stay in `{sp}` but avoid `{rgdal}`. You have to keep in mind that `{sp}`  use S4 classes. 
+
+```{r mix_sp_sf_proj}
+# partially sf
+map_2 <- map
+(proj4string(map_2) <- sp::CRS(SRS_string = sf::st_crs(27700)$wkt))
+```
+
+Doing it with full `{sf}`:
+
+```{r full_sf}
+# More sf 
+map_3 <- st_as_sf(map)
+map_3 <- st_set_crs(map_3, 27700) # print st_set_crs()
+map_3$name <- sapply(map@polygons, function(x) x@ID)
+# an other way of doing it provided by Paula Moraga
+# sapply(slot(map, "polygons"), function(x){slot(x, "ID")})
+# I did not know about slot()
+```
+
+More on proj4string and **crs** as **wkt** here: https://r-spatial.org/r/2020/03/17/wkt.html
+
+For leaflet we will need to transform the CRS:
+
+```{r}
+# require rgdal
+map <- sp::spTransform(map,
+                   CRS("+proj=longlat +datum=WGS84 +no_defs"))
+
+map_3 <- sf::st_transform(map_3, 4326)
+```
+
+### Data
+
+With `{sp}`:
+
+```{r adding_data}
+d <- scotland$data[,c("county.names", "cases", "expected", "AFF")]
+names(d) <- c("county", "Y", "E", "AFF")
+d$SIR <- d$Y / d$E
+rownames(d) <- d$county
+map <- SpatialPolygonsDataFrame(map, d, match.ID = TRUE)
+```
+
+
+With `{sf}`:
+
+```{r}
+# you can also use dplyr verbs
+map_3m <- merge(map_3, d, by.x = "name", by.y = "county")
+```
+
+## Mapping SIRs
+
+A first version:
+
+```{r first_leaflet}
+# a base map, tile by default are OSM
+l <- leaflet(map) |> addTiles()
+
+pal <- leaflet::colorNumeric(palette = "YlOrRd", domain = map$SIR)
+
+l |>
+  # border
+  addPolygons(
+    color = "grey", weight = 1,
+    fillColor = ~ pal(SIR), fillOpacity = 0.5
+  ) |>
+  # SIR
+  addLegend(
+    pal = pal, values = ~SIR, opacity = 0.5,
+    title = "SIR", position = "bottomright"
+  )
+```
+
+Building on it: 
+
+- adding good label:  
+  * Use `stringf()`   
+  * use of `htmltools::HTML`
+
+```{r labels}
+labels <- sprintf("<strong> %s </strong> <br/>
+  Observed: %s <br/> Expected: %s <br/>
+  AFF: %s <br/> SIR: %s",
+  map$county, map$Y, round(map$E, 2),
+  map$AFF, round(map$SIR, 2)
+) |>
+  lapply(htmltools::HTML)
+```
+
+
+Then we add it to our previous codes: 
+
+```{r addinglabels}
+l |>
+  addPolygons(
+    color = "grey", weight = 1,
+    fillColor = ~ pal(SIR), fillOpacity = 0.5,
+    highlightOptions = highlightOptions(weight = 4),
+    ## here
+    label = labels,
+    labelOptions = labelOptions(
+      style = list(
+        "font-weight" = "normal",
+        padding = "3px 8px"
+      ),
+      textsize = "15px", direction = "auto"
+    )
+  ) |>
+  addLegend(
+    pal = pal, values = ~SIR, opacity = 0.5,
+    title = "SIR", position = "bottomright"
+  )
+```
+
+SIR can be problematic if we have low population -> Modeling!
+
+## Modeling
+
+### Our model:
+
+First assumptions: Observed count is Poisson distributed ($y_i$)
+
+$$Y_i \sim Poisson(E_i\theta_i), i = 1, ..., n$$
+
+With $E_i$ is the expected count and $\theta_i$ is the relative risk in area $i$.
+
+$$log(\theta_i) = \beta_0  + \beta_1 \times AFF_i + u_i + v_i$$
+
+
+$$\mu | \mu_{-i} \sim N (\bar{u_{\delta_i}}, \frac{\sigma^2_u}{n_{\delta_i}})$$
+
+$$v_i \sim N(0, \sigma²_v)$$
+
+### neighborhood matrix
+
+```{r nb}
+library(spdep)
+library(INLA)
+nb <- poly2nb(map) # same result with map_3
+nb2INLA("map.adj", nb)
+g <- inla.read.graph(filename = "map.adj")
+```
+
+
+### Using INLA
+
+With have two random effects $u$ and $v$:
+
+```{r init_id}
+map$idareau <- 1:nrow(map@data) # u
+map$idareav <- 1:nrow(map@data) # v
+# sf map_3iareau <- 1:nrow(map_3)
+```
+
+Same model than chapter 5:
+
+```{r formula}
+formula <- Y ~ AFF +
+  f(idareau, model = "besag", graph = g, scale.model = TRUE) +
+  f(idareav, model = "iid")
+```
+
+```{r  inla}
+res <- inla(formula,
+  family = "poisson", data = map@data,
+  E = E, control.predictor = list(compute = TRUE),
+  # this need to be added for latter!!!
+  #control.compute=list(return.marginals.predictor=TRUE)
+
+)
+summary(res)
+```
+Greatly surprise by:
+
+- this was quick!  
+
+- AFF increases lip cancer risk (and it is clear)
+
+```{r ggplotRisk}
+library(ggplot2)
+marginal <- inla.smarginal(res$marginals.fixed$AFF) # list
+marginal <- data.frame(marginal)
+ggplot(marginal, aes(x = x, y = y)) + geom_line() +
+  labs(x = expression(beta[1]), y = "Density") +
+  geom_vline(xintercept = 0, col = "black") + theme_bw()
+```
+
+## Mapping relative risks
+
+We have mean and intervals how do we represent that? (labels)
+
+1. Add mean and intervals to data 
+
+```{r interval_RR}
+map$RR <- res$summary.fitted.values[, "mean"]
+map$LL <- res$summary.fitted.values[, "0.025quant"]
+map$UL <- res$summary.fitted.values[, "0.975quant"]
+```
+
+2. add it to the labels
+
+(RR: relative risk)
+
+
+```{r}
+pal <- colorNumeric(palette = "YlOrRd", domain = map$RR)
+
+labels <- sprintf("<strong> %s </strong> <br/>
+  Observed: %s <br/> Expected: %s <br/>
+  AFF: %s <br/> SIR: %s <br/> RR: %s (%s, %s)",
+  map$county, map$Y, round(map$E, 2),
+  map$AFF, round(map$SIR, 2), round(map$RR, 2),
+  round(map$LL, 2), round(map$UL, 2)
+) %>% lapply(htmltools::HTML)
+
+lRR <- leaflet(map) %>%
+  addTiles() %>%
+  addPolygons(
+    color = "grey", weight = 1, fillColor = ~ pal(RR),
+    fillOpacity = 0.5,
+    highlightOptions = highlightOptions(weight = 4),
+    label = labels,
+    labelOptions = labelOptions(
+      style =
+        list(
+          "font-weight" = "normal",
+          padding = "3px 8px"
+        ),
+      textsize = "15px", direction = "auto"
+    )
+  ) %>%
+  addLegend(
+    pal = pal, values = ~RR, opacity = 0.5, title = "RR",
+    position = "bottomright"
+  )
+
+lRR
+
+```
+
+
+## Exceedance probabilities
+
+Probabilities of RR ($\theta_i$) estimates being greater than a given threshold value ($c$).
+
+$$P(\theta_i > c) = 1 - P(\theta_i \leq c) $$
+
+```{r}
+# 1 - inla.pmarginal(q = c, marginal = marg)
+res <- readRDS("data/res_ch6")
+c = 2
+marg <- res$marginals.fitted.values[[1]] # first county in DF
+1 - inla.pmarginal(q = c, marginal = marg)
+```
+
+We want it for every counties: 
+
+```{r}
+exc <- sapply(res$marginals.fitted.values,
+FUN = function(marg){1 - inla.pmarginal(q = 2, marginal = marg)})
+
+map$exc <- exc
+```
+
+
+Then we add it to our labels: 
+
+```{r}
+pal <- colorNumeric(palette = "YlOrRd", domain = map$exc)
+
+labels <- sprintf("<strong> %s </strong> <br/>
+  Observed: %s <br/> Expected: %s <br/>
+  AFF: %s <br/> SIR: %s <br/> RR: %s (%s, %s) <br/> P(RR>2): %s",
+  map$county, map$Y, round(map$E, 2),
+  map$AFF, round(map$SIR, 2), round(map$RR, 2),
+  round(map$LL, 2), round(map$UL, 2), round(map$exc, 2) ## <- here
+) %>% lapply(htmltools::HTML)
+
+lexc <- leaflet(map) %>%
+  addTiles() %>%
+  addPolygons(
+    color = "grey", weight = 1, fillColor = ~ pal(exc),
+    fillOpacity = 0.5,
+    highlightOptions = highlightOptions(weight = 4),
+    label = labels,
+    labelOptions = labelOptions(
+      style =
+        list(
+          "font-weight" = "normal",
+          padding = "3px 8px"
+        ),
+      textsize = "15px", direction = "auto"
+    )
+  ) %>%
+  # in lengend instead of RR
+  addLegend(
+    pal = pal, values = ~exc, opacity = 0.5, title = "P(RR>2)",
+    position = "bottomright"
+  )
+lexc
+```
+
+
 
 ## Meeting Videos
 
