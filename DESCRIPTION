@@ -25,6 +25,7 @@ Imports:
     mapview,
     RColorBrewer,
     rgdal,
+    rgeos,
     rmarkdown,
     sf,
     SpatialEpi,
