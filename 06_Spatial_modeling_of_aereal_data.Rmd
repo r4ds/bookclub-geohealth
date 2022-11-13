@@ -300,7 +300,7 @@ $$P(\theta_i > c) = 1 - P(\theta_i \leq c) $$
 
 ```{r}
 # 1 - inla.pmarginal(q = c, marginal = marg)
-res <- readRDS("data/res_ch6")
+res <- readRDS("data/res_chap6")
 c = 2
 marg <- res$marginals.fitted.values[[1]] # first county in DF
 1 - inla.pmarginal(q = c, marginal = marg)
