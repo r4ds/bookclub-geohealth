@@ -26,6 +26,7 @@ Imports:
     RColorBrewer,
     rgdal,
     rgeos,
+    Rgraphviz,
     rmarkdown,
     sf,
     SpatialEpi,
