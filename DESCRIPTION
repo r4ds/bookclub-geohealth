@@ -28,6 +28,7 @@ Imports:
     rmarkdown,
     sf,
     SpatialEpi,
+    spdep,
     tidyverse,
     tmap,
     viridis
