@@ -2,12 +2,284 @@
 
 **Learning objectives:**
 
-- THESE ARE NICE TO HAVE BUT NOT ABSOLUTELY NECESSARY
 
-## SLIDE 1
+Risk of lung cancer in Ohio, USA, from 1968 to 1988 using the R-INLA package:
 
-- ADD SLIDES AS SECTIONS (`##`).
-- TRY TO KEEP THEM RELATIVELY SLIDE-LIKE; THESE ARE NOTES, NOT THE BOOK ITSELF.
+- how to calculate the expected disease counts using indirect standardization, and the standardized incidence ratios (SIRs).
+
+- how to fit a Bayesian spatio-temporal model to obtain disease risk estimates for each of the Ohio counties and years of study.
+
+- how to create static and interactive maps and time plots of the SIRs and disease risk estimates.
+
+
+## Data
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+# remotes::install_github("Paula-Moraga/SpatialEpiApp")
+library(SpatialEpiApp)
+namecsv <- "SpatialEpiApp/data/Ohio/dataohiocomplete.csv"
+dohio <- read.csv(system.file(namecsv, package = "SpatialEpiApp"))
+head(dohio)
+```
+
+Map of Ohio
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(rgdal)
+library(sf)
+
+nameshp <- system.file(
+"SpatialEpiApp/data/Ohio/fe_2007_39_county/fe_2007_39_county.shp",
+package = "SpatialEpiApp")
+map <- readOGR(nameshp, verbose = FALSE)
+
+plot(map)
+```
+
+
+Calculate the observed and expected counts, and the SIRs for each county and year, and create a data frame.
+
+
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(tidyverse)
+d <- dohio %>%
+  group_by(county=NAME,year) %>%
+  summarize(Y=sum(y))%>%
+  ungroup()%>%
+  arrange(year)
+head(d)
+```
+
+## Expected cases
+
+- indirected standardization
+- strata: 2 races X 2 genders = 2X2 = 4
+```{r}
+library(SpatialEpi)
+n.strata = 4
+dohio <- dohio%>%
+  arrange(county,year,gender,race)
+  
+E <- expected(population = dohio$n,
+              cases = dohio$y,
+              n.strata = n.strata)
+```
+
+
+```{r}
+nyears <- length(unique(dohio$year))
+countiesE <- rep(unique(dohio$NAME),
+                 each = nyears)
+```
+
+```{r}
+ncounties <- length(unique(dohio$NAME))
+yearsE <- rep(unique(dohio$year),
+              times = ncounties)
+
+dE <- data.frame(county = countiesE, year = yearsE, E = E)
+
+head(dE)
+```
+
+
+```{r}
+d <- merge(d, dE, by = c("county", "year"))
+head(d)
+```
+
+## SIRs
+
+
+$$SIR_{ij}=\frac{Y_{ij}}{E_{ij}}$$
+
+```{r}
+d$SIR <- d$Y / d$E
+head(d)
+```
+
+```{r}
+dw <- d%>%
+  pivot_wider(names_from=year,values_from = c("Y","E","SIR"))
+head(dw)
+```
+
+
+## Mapping
+
+
+```{r}
+map@bbox
+map@data[1:2,]
+
+map <- merge(map, dw, by.x = "NAME", by.y = "county")
+```
+
+
+
+```{r}
+map_sf <- st_as_sf(map)
+```
+
+
+```{r}
+map_sf <- gather(map_sf, year, SIR, paste0("SIR_", 1968:1988))
+```
+
+```{r}
+map_sf$year <- as.integer(substring(map_sf$year, 5, 8))
+```
+
+```{r}
+ggplot(map_sf) + 
+  geom_sf(aes(fill = SIR)) +
+  facet_wrap(~year, dir = "h", ncol = 7) +
+  ggtitle("SIR") + theme_bw() +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()
+  ) +
+  scale_fill_gradient2(
+    midpoint = 1, low = "blue", mid = "white", high = "red"
+  )
+```
+
+
+### Time plots of SIRs
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+g <- ggplot(d, 
+            aes(x = year, y = SIR, 
+                   group = county, 
+                   color = county)) +
+  geom_line() + 
+  geom_point(size = 2) + 
+  theme_bw()+
+  theme(legend.position = "none")
+
+library(gghighlight)
+g + gghighlight(county == "Lorain")
+```
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(plotly)
+ggplotly(g)
+```
+
+## Modeling
+
+Relative risk of lung cancer for each Ohio county and year is estimated with the **Bernardinelli model (Bernardinelli et al. 1995)**.
+
+$$Y_{ij}\sim Po(E_{ij}\theta_{ij})$$
+$$log(\theta_{ij})=\alpha+u_i+v_i+(\beta+\delta_i) \text{ x }t_j$$
+
+### Neighborhood matrix
+
+```{r message=FALSE, warning=FALSE, paged.print=FALSE}
+library(INLA)
+library(spdep)
+map%>%class
+nb <- poly2nb(map)
+head(nb)
+```
+```{r eval=FALSE}
+?poly2nb
+?nb2INLA
+?inla.read.graph
+```
+
+
+```{r}
+nb2INLA("map.adj", nb)
+g <- inla.read.graph(filename = "map.adj")
+```
+
+### Inference using INLA
+
+```{r}
+d$idarea <- as.numeric(as.factor(d$county))
+d$idarea1 <- d$idarea
+d$idtime <- 1 + d$year - min(d$year)
+```
+
+
+And the model:
+```{r}
+formula <- Y ~ f(idarea, model = "bym", graph = g) + f(idarea1, idtime, model = "iid") + idtime
+```
+
+```{r}
+res <- inla(formula,
+  family = "poisson", 
+  data = d, 
+  E = E,
+  control.predictor = list(compute = TRUE)
+)
+```
+
+
+## Mapping relative risks
+
+```{r}
+d$RR <- res$summary.fitted.values[, "mean"]
+d$LL <- res$summary.fitted.values[, "0.025quant"]
+d$UL <- res$summary.fitted.values[, "0.975quant"]
+```
+
+
+
+```{r}
+map_sf <- merge(
+  map_sf, d,
+  by.x = c("NAME", "year"),
+  by.y = c("county", "year")
+)
+```
+
+
+
+```{r}
+ggplot(map_sf) + 
+  geom_sf(aes(fill = RR)) +
+  facet_wrap(~year, dir = "h", ncol = 7) +
+  ggtitle("RR") + theme_bw() +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()
+  ) +
+  scale_fill_gradient2(
+    midpoint = 1, low = "blue", mid = "white", high = "red"
+  )
+```
+
+Animate the plot:
+
+```{r eval=FALSE}
+library(gganimate)
+ggplot(map_sf) + 
+  geom_sf(aes(fill = RR)) +
+  theme_bw() +
+  theme(
+    axis.text.x = element_blank(),
+    axis.text.y = element_blank(),
+    axis.ticks = element_blank()
+  ) +
+  scale_fill_gradient2(
+    midpoint = 1, low = "blue", mid = "white", high = "red"
+  ) +
+  transition_time(year) +
+  labs(title = "Year: {round(frame_time, 0)}")
+```
+
+
+To save the animation:
+```{r}
+# anim_save("oh_map.gif")
+```
+
 
 ## Meeting Videos
 
