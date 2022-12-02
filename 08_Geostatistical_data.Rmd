@@ -2,12 +2,173 @@
 
 **Learning objectives:**
 
-- THESE ARE NICE TO HAVE BUT NOT ABSOLUTELY NECESSARY
+- Learn about geostatitics:
 
-## SLIDE 1
+  * striclky, weakly, intrinsic stationarity  
+  * Isotropy/anysotropy  
+  * Emperical variogram  
+  * Exponential and Matèrn covariance functions  
 
-- ADD SLIDES AS SECTIONS (`##`).
-- TRY TO KEEP THEM RELATIVELY SLIDE-LIKE; THESE ARE NOTES, NOT THE BOOK ITSELF.
+- **S**tochastic **P**artial **D**ifferential **E**quation approach (SPDE)
+  
+- Practice modelling geostatistics data 
+
+  * Model (Binomial / Gaussian)
+  * Mesh Delaunay triangulation 
+  * Displaying result!
+
+```{r load_lib}
+library(INLA)
+library(geoR)
+library(ggplot2)
+```
+
+
+## Geostatistical data 
+
+Remember: Areal data: discrete data 
+
+- Continuous phenomenon (density of mosquito) but recorded at specific locations (trap for mosquito)
+
+$${Z(s) : s \in  D \subset \mathbb{R}^2}$$
+
+$Z(s_1), ..., Z(s_n)$ observation of Z (spatial variable) at $s_1, ..., s_n$ (locations)
+
+
+### Gaussian Random Fields (GRF)
+
+> A Gaussian random field (GRF) is a collection of random variables where the observations occur in a continuous domain, and where every finite collection [ex: latitude, longitude] of random variables has a **multivariate normal distribution**.
+
+Random process = stochastic process
+
+.. by definition it can't be constant 
+
+### Stationarity 
+
+- *strickly/strong stationary*: a shift in location will not result in any change in the joint distribution of the random variables  (ex: white noise)
+
+- *weak stationary* (second order): mean are constant on the domain $D$  and covariances depend only on the difference between locations ($h$) :
+
+$$Cov(Z(s), Z(s+h)) = C(h) $$
+
+C is a covariance function (see later with Matèrn)
+
+- *Intrinsic stationary:*  the variance between two locations relies only on the distance ($h$) (and not their location).
+
+$Var(Z(s+h) - Z(s))$ it is called a **variogram**
+
+Remember: $Var(X) = E[(X -E(X))^2]$
+
+$$ Var(Z(s + h) - Z(s)) =  E\{Z(s+h) - Z(s) - E(Z(s+h) + Z(s))\}^2$$
+
+We reorganize it:
+
+$$2 \gamma  = E\{(Z(s+h) - E(Z(s+h))) - (Z(s) - E(Z(s))))\}^2$$
+
+$$2\gamma = E\{(Z(s+h) -E(Z(s+h)))^2\} + E\{(Z(s) - E(Z(s)))^2\} \\
+     - 2E\{(Z(s+h) - E\{(Z(s+h))\}) * (Z(s) - E\{(Z(s)\})\}$$
+
+
+$$2\gamma = Var(Z(s+h)) + Var(Z(s)) - 2Cov(Z(s+h), Z(s)) $$
+
+Remember that $Var(Z(s+h)) = Var(Z(s))$:
+
+$$ 2 \gamma = C(0) + C(0) - 2C(h)$$
+
+Then a *semivariogram* is composed of $C(0)$ (or *nugget*) and $C(h)$ (or spatial covariance function)
+
+$$ \gamma = C(0) - C(h) $$
+
+We can also obtain the *empirical semivariogram* this way:
+
+$$\hat{\gamma}(h) = \frac{1}{2|N(h)|}\sum_{N(h)}(Z(s_i) - Z(s_j))² $$
+#### Isotropy/Anisotropy
+
+The direction of $h$ does not matter only it's length = **isotropy**
+
+![From Ch8](img/semivariogram.png)
+
+TODO maybe: draw it with R
+
+let's pick a distance $d$, remember cov = var * cor
+
+$$C(d) = \sigma² \rho(d), \quad d > 0  $$
+
+$\rho(d)$ is a correlation function when $\rho(d) = 0$ it is called *range*, it is the minimun distance were random observation are said to be "independant". This is very hard to get so we use *effective range* were we have a very low amount of correlation (usually 0.05). 
+
+### Usefull covariance functions
+
+They should not allow negative values for variance (yup variation can only be positive). 
+
+#### Exponential model
+
+$$Cov(Z(s_i), Z(s_j)) = \sigma^2 exp(-k||s_i -s_j||) $$
+
+
+```{r expo_model}
+h <- seq(from = 0, to = 1, by = .05)
+sigma = 1
+
+expo_model <- function(sigma, k, h) {
+  sigma^2 * exp(-k * h)
+}
+
+# k is the decay
+k_10 <- expo_model(sigma, k = 10, h)
+k_5 <- expo_model(sigma, k = 5, h)
+k_1 <- expo_model(sigma, k = 1, h)
+
+plot(h, k_10, type = "l", ylab = "Cov" )
+lines(h, k_5, lty = 2)
+lines(h, k_1, lty = 3)
+
+```
+
+
+#### Matèrn model
+
+$$Cov(Z(s_i), Z(s_j)) = \frac{\sigma^2}{2^{v-1}\Gamma(v)}(k||s_i - s_j||)^vK_v(k||s_i-s_j||)$$
+$K$ is the *effective range* here define when $\rho = \frac{\sqrt(8)}{k}$ 
+
+![](img/matern.png)
+
+TODO: undertand it and `INLA::inla.matern.cov()` 
+
+
+## Stochastic partial differntial equation approach
+
+I do not have understand it but: 
+
+- A GRF with a Matern covariance matrix can be expressed as a solution to predict the variable of interest. 
+
+- the parameters of Matèrn covariance and SPDE are coupled (INLA default is smouthness of 1/2 ie exponential cov.)
+
+We can approximate SPDE using the Finite Element method: divide $D$ into a set of of non-intersecting triangles. 
+
+That bring us to a mesh with $n$ nodes and $n$ basis function (each function decrease when going away of the node). That allows use to go from a continuous Gaussian field to a discrete indexed Gaussian markov random field. 
+
+
+$$x(s) = \sum^n_{k = 1} \psi_k(s)x_k $$
+
+$x_k$ are the zero mean gaussian distributed weights
+
+$x = (x_1, ..., x_n) \sim N(0, Q^{-1}(\tau,k))$ (N is a joint distribution) give an approximation of $x(s)$
+
+## Spatial modeling of rainfall in Paraná, Brazil
+
+Average rainfall recorded over different year over May-June at 143 stations
+
+```{r}
+
+data.frame(cbind(parana$coords, Rainfall = parana$data)) |>
+ggplot()+
+  geom_point(aes(east, north, color = Rainfall), size = 2) +
+  coord_fixed(ratio = 1) +
+  scale_color_gradient(low = "blue", high = "orange") +
+  geom_path(data = data.frame(parana$border), aes(east, north)) +
+  theme_bw()
+```
+
 
 ## Meeting Videos
 
