@@ -291,7 +291,7 @@ stk.full <- inla.stack(stk.e, stk.p)
 
 #### Formula
 
-```{r formula}
+```{r formulach08}
 formula <- y ~ 0 + b0 + f(s, model = spde) # 0 for no intercept
 ```
 
