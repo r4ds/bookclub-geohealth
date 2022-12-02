@@ -219,9 +219,181 @@ $$ \alpha = v + d/2$$
 
 d = 2 in spatial 2D case
 
-```{r}
+```{r matern}
 spde <- inla.spde2.matern(mesh = mesh, alpha = 2, constr = TRUE)
 ```
+
+```{r index}
+indexs <- inla.spde.make.index("s", spde$n.spde)
+```
+
+#### Projection matrix:
+
+We need to build a matrix that contains n rows (n = number of locations) and m column (m = vertex of triangle).
+
+![](img/triangle_mesh.png)
+
+```{r meshmatrix}
+A <- inla.spde.make.A(mesh = mesh, loc = coo)
+rowSums(A) |> sum()
+```
+
+#### Prediction data 
+
+We nee to build a grid: 50 x 50 
+
+```{r expand_grid}
+bb <- bbox(parana$border) # bounding box
+x <- seq(bb[1, "min"] - 1, bb[1, "max"] + 1, length.out = 50) # increase a bit the size 
+y <- seq(bb[2, "min"] - 1, bb[2, "max"] + 1, length.out = 50)
+coop <- as.matrix(expand.grid(x, y))
+```
+
+Then you keep point only inside the border:
+
+```{r}
+ind <- point.in.polygon(
+  coop[, 1], coop[, 2],
+  parana$border[, 1], parana$border[, 2]
+)
+coop <- coop[which(ind == 1), ]
+plot(coop, asp = 1)
+```
+And create a projection matrix with it:
+
+```{r}
+Ap <- inla.spde.make.A(mesh = mesh, loc = coop)
+dim(Ap) 
+```
+
+#### Building estimation and prediction "stack"
+
+```{r}
+# stack for estimation stk.e
+stk.e <- inla.stack(
+  tag = "est",
+  data = list(y = parana$data),
+  A = list(1, A),
+  effects = list(data.frame(b0 = rep(1, nrow(coo))), s = indexs) # our models b0 and spatial effect
+)
+
+# stack for prediction stk.p
+stk.p <- inla.stack(
+  tag = "pred",
+  data = list(y = NA), # to be filled
+  A = list(1, Ap),
+  effects = list(data.frame(b0 = rep(1, nrow(coop))), s = indexs)
+)
+
+# stk.full has stk.e and stk.p
+stk.full <- inla.stack(stk.e, stk.p)
+```
+
+#### Formula
+
+```{r formula}
+formula <- y ~ 0 + b0 + f(s, model = spde) # 0 for no intercept
+```
+
+
+#### Inla() call
+
+This is not intuitive:
+
+```{r}
+res <- inla(formula,
+  data = inla.stack.data(stk.full), #it has both data and grid
+  control.predictor = list(
+    compute = TRUE,
+    A = inla.stack.A(stk.full)
+  )
+)
+```
+
+
+#### result!
+
+We will get the index of the rows with prediction and use it to extract the correct mean and quantiles:
+
+```{r}
+index <- inla.stack.index(stk.full, tag = "pred")$data
+
+pred_mean <- res$summary.fitted.values[index, "mean"]
+pred_ll <- res$summary.fitted.values[index, "0.025quant"]
+pred_ul <- res$summary.fitted.values[index, "0.975quant"]
+```
+
+We build a tidy data frame with it: 
+
+```{r}
+dpm <- rbind(
+  data.frame(
+    east = coop[, 1], north = coop[, 2],
+    value = pred_mean, variable = "pred_mean"
+  ),
+  data.frame(
+    east = coop[, 1], north = coop[, 2],
+    value = pred_ll, variable = "pred_ll"
+  ),
+  data.frame(
+    east = coop[, 1], north = coop[, 2],
+    value = pred_ul, variable = "pred_ul"
+  )
+)
+dpm$variable <- as.factor(dpm$variable)
+```
+
+And map it: 
+
+```{r}
+ggplot(dpm) + geom_tile(aes(east, north, fill = value)) +
+  facet_wrap(~variable, nrow = 1) +
+  coord_fixed(ratio = 1) +
+  scale_fill_gradient(
+    name = "Rainfall",
+    low = "blue", high = "orange"
+  ) +
+  theme_bw()
+```
+
+#### just the spatial field:
+
+```{r}
+newloc <- cbind(c(219, 678, 818), c(20, 20, 160))
+Aproj <- inla.spde.make.A(mesh, loc = newloc)
+Aproj %*% res$summary.random$s$mean
+```
+
+```{r}
+rang <- apply(mesh$loc[, c(1, 2)], 2, range)
+proj <- inla.mesh.projector(mesh,
+  xlim = rang[, 1], ylim = rang[, 2],
+  dims = c(300, 300)
+)
+
+mean_s <- inla.mesh.project(proj, res$summary.random$s$mean)
+sd_s <- inla.mesh.project(proj, res$summary.random$s$sd)
+
+df <- expand.grid(x = proj$x, y = proj$y)
+df$mean_s <- as.vector(mean_s)
+df$sd_s <- as.vector(sd_s)
+
+library(viridis)
+library(cowplot)
+
+gmean <- ggplot(df, aes(x = x, y = y, fill = mean_s)) +
+  geom_raster() +
+  scale_fill_viridis(na.value = "transparent") +
+  coord_fixed(ratio = 1) + theme_bw()
+
+gsd <- ggplot(df, aes(x = x, y = y, fill = sd_s)) +
+  geom_raster() +
+  scale_fill_viridis(na.value = "transparent") +
+  coord_fixed(ratio = 1) + theme_bw()
+
+plot_grid(gmean, gsd)
+```
+
 
 
 ## Meeting Videos
