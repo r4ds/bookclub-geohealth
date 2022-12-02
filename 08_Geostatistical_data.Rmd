@@ -156,10 +156,11 @@ $x = (x_1, ..., x_n) \sim N(0, Q^{-1}(\tau,k))$ (N is a joint distribution) give
 
 ## Spatial modeling of rainfall in Paraná, Brazil
 
+### Data
+
 Average rainfall recorded over different year over May-June at 143 stations
 
-```{r}
-
+```{r ploting_data}
 data.frame(cbind(parana$coords, Rainfall = parana$data)) |>
 ggplot()+
   geom_point(aes(east, north, color = Rainfall), size = 2) +
@@ -167,6 +168,59 @@ ggplot()+
   scale_color_gradient(low = "blue", high = "orange") +
   geom_path(data = data.frame(parana$border), aes(east, north)) +
   theme_bw()
+```
+
+### Model
+
+$$ Y_i \sim N (\mu_i, \sigma^2), i = 1,2, ..., n$$
+
+$$\mu_i = \beta_0 + Z(si) $$
+
+Rainfall as a normal distribution with a mean that follow a zero-mean Gaussian process with a Matèrn covariance function. 
+
+#### Mesh construction
+
+```{r mesh1}
+coo <- parana$coords # I think they are in degree
+summary(dist(coo))
+```
+```{r mesh2}
+mesh <- inla.mesh.2d(
+  loc = coo, # our coords
+  offset = c(50, 100), # inner border and outer border
+  cutoff = 1, # avoid building small and plenty triangle if point are close
+  max.edge = c(30, 60) # small triangle (30) and big one outside (60)
+)
+
+# we have a warning of a deprecated function
+plot(mesh)
+points(coo, col = "red")
+```
+
+```{r mesh_str}
+str(mesh, max.level = 1)
+```
+
+On this one we did not use `boundary`: 
+
+```{r mesh_boundary}
+bnd <- inla.nonconvex.hull(coo)
+meshb <- inla.mesh.2d(
+  boundary = bnd, offset = c(50, 100),
+  cutoff = 1, max.edge = c(30, 60)
+)
+plot(meshb)
+points(coo, col = "red")
+```
+
+#### SPDE model on the mesh
+
+$$ \alpha = v + d/2$$
+
+d = 2 in spatial 2D case
+
+```{r}
+spde <- inla.spde2.matern(mesh = mesh, alpha = 2, constr = TRUE)
 ```
 
 
