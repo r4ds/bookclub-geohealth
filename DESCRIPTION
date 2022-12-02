@@ -27,7 +27,8 @@ Imports:
     maptools,
     mapview,
     RColorBrewer,
-    rgdal,
+    rgeos,
+    rgdal (>= 1.5.32),
     Rgraphviz,
     rmarkdown,
     sf,
@@ -35,5 +36,11 @@ Imports:
     spdep,
     tidyverse,
     tmap,
-    viridis
+    viridis,
+    SpatialEpiApp (>= 0.5),
+    tidyr (>= 1.2.1),
+    gghighlight (>= 0.4.0),
+    plotly
 Additional_repositories: https://inla.r-inla-download.org/R/stable/
+Remotes: 
+    Paula-Moraga/SpatialEpiApp
