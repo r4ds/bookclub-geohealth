@@ -4,6 +4,76 @@
 
 - THESE ARE NICE TO HAVE BUT NOT ABSOLUTELY NECESSARY
 
+
+## Map
+
+### Getting Spain
+
+```{r mapch10}
+library(lwgeom)
+library(raster)
+library(sf)
+library(dplyr)
+library(ggplot2)
+
+m <- getData(name = "GADM", country = "Spain", level = 0) # warning indicating that {geodata} should used
+plot(m)
+```
+
+### Filter to only get main territory
+
+```{r filterch10}
+m <- m %>%
+  st_as_sf() %>%
+  st_cast("POLYGON") %>%
+  mutate(area = st_area(.)) %>%
+  arrange(desc(area)) %>%
+  slice(1)
+```
+
+```{r}
+ggplot(m) + geom_sf() + theme_bw()
+```
+
+```{r transformspain}
+m <- st_transform(m, 25830) 
+ggplot(m) + 
+  geom_sf() + 
+  theme_bw() + 
+  coord_sf(datum = st_crs(m)) # did not know that !
+```
+
+## Data!
+
+We get them from [European Environment Agency](http://aidef.apps.eea.europa.eu/?source=%7B%22query%22%3A%7B%22match_all%22%3A%7B%7D%7D%2C%22display_type%22%3A%22tabular%22%7D)
+
+WE are using annual averages of $PM_2.5$ recorded at monitoring stations (2015, 2016,2017).
+
+```{r}
+my_colnames <- c("ID", "CountryOrTerritory",	"ReportingYear",	"UpdateTime",
+                 "StationLocalId",	"SamplingPointLocalId",	"SamplingPoint_Latitude",
+                 "SamplingPoint_Longitude",	"Pollutant",	"AggregationType",
+                 "Namespace",	"Unit",	"BeginPosition",	"EndPosition",
+                 "Validity",	"Verification",	"DataCoverage",	"DataCapture",
+                 "TimeCoverage",	"AQValue")
+
+
+d <- read.csv("https://www.paulamoraga.com/assets/datasets/dataPM25.csv", 
+              skip = 1, 
+              header = FALSE,
+              col.names = my_colnames)
+
+d <- d[, c(
+  "ReportingYear", "StationLocalId",
+  "SamplingPoint_Longitude",
+  "SamplingPoint_Latitude",
+  "AQValue"
+)]
+names(d) <- c("year", "id", "long", "lat", "value")
+```
+
+
+
 ## SLIDE 1
 
 - ADD SLIDES AS SECTIONS (`##`).
