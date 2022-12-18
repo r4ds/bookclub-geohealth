@@ -27,6 +27,7 @@ Imports:
     maptools,
     mapview,
     RColorBrewer,
+    reshape2,
     rgdal,
     Rgraphviz,
     rmarkdown,
