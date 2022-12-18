@@ -17,6 +17,7 @@ Imports:
     cowplot,
     gapminder,
     geoR,
+    gghighlight (>= 0.4.0),
     graph,
     INLA,
     knitr,
@@ -26,15 +27,21 @@ Imports:
     maps,
     maptools,
     mapview,
+    plotly,
     RColorBrewer,
     reshape2,
-    rgdal,
+    rgdal (>= 1.5.32),
+    rgeos,
     Rgraphviz,
     rmarkdown,
     sf,
     SpatialEpi,
+    SpatialEpiApp (>= 0.5),
     spdep,
+    tidyr (>= 1.2.1),
     tidyverse,
     tmap,
     viridis
 Additional_repositories: https://inla.r-inla-download.org/R/stable/
+Remotes: 
+    Paula-Moraga/SpatialEpiApp
