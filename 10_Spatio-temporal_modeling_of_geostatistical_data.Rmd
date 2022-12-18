@@ -2,12 +2,319 @@
 
 **Learning objectives:**
 
-- THESE ARE NICE TO HAVE BUT NOT ABSOLUTELY NECESSARY
+- Same workflow but this time with penalised complexity priors  
+    - `inla.spde2pcmatern()`  
+- Adding time in the analysis  
+    
+## Map
 
-## SLIDE 1
+### Getting Spain
 
-- ADD SLIDES AS SECTIONS (`##`).
-- TRY TO KEEP THEM RELATIVELY SLIDE-LIKE; THESE ARE NOTES, NOT THE BOOK ITSELF.
+```{r mapch10, message=FALSE}
+#spatial
+library(lwgeom)
+library(raster)
+library(sf)
+#data wrangling
+library(dplyr)
+#INLA
+library(INLA)
+#data viz
+library(ggplot2)
+library(viridis)
+
+m <- getData(name = "GADM", country = "Spain", level = 0) # warning indicating that {geodata} should used
+plot(m)
+```
+
+### Filter to only get main territory
+
+```{r filterch10}
+m <- m %>%
+  st_as_sf() %>%
+  st_cast("POLYGON") %>%
+  mutate(area = st_area(.)) %>%
+  arrange(desc(area)) %>%
+  slice(1)
+```
+
+
+```{r transformspain}
+m <- st_transform(m, 25830) 
+ggplot(m) + 
+  geom_sf() + 
+  theme_bw() + 
+  coord_sf(datum = st_crs(m)) # did not know that !
+```
+
+## Data!
+
+### Getting it
+
+We get them from [European Environment Agency](http://aidef.apps.eea.europa.eu/?source=%7B%22query%22%3A%7B%22match_all%22%3A%7B%7D%7D%2C%22display_type%22%3A%22tabular%22%7D)
+
+We are using annual averages of $PM_2.5$ recorded at monitoring stations (2015, 2016,2017).
+
+```{r gettingdata}
+my_colnames <- c("ID", "CountryOrTerritory",	"ReportingYear",	"UpdateTime",
+                 "StationLocalId",	"SamplingPointLocalId",	"SamplingPoint_Latitude",
+                 "SamplingPoint_Longitude",	"Pollutant",	"AggregationType",
+                 "Namespace",	"Unit",	"BeginPosition",	"EndPosition",
+                 "Validity",	"Verification",	"DataCoverage",	"DataCapture",
+                 "TimeCoverage",	"AQValue")
+
+
+d <- read.csv("https://www.paulamoraga.com/assets/datasets/dataPM25.csv", 
+              skip = 1, 
+              header = FALSE,
+              col.names = my_colnames)
+
+
+```
+
+### Cleaning it
+
+Data are in 4326 (lat/long)
+
+```{r selectingdata}
+d <- d[, c(
+  "ReportingYear", "StationLocalId",
+  "SamplingPoint_Longitude",
+  "SamplingPoint_Latitude",
+  "AQValue"
+)]
+names(d) <- c("year", "id", "long", "lat", "value")
+```
+
+
+```{r}
+p <- st_as_sf(data.frame(long = d$long, lat = d$lat),
+              coords = c("long", "lat"))
+st_crs(p) <- st_crs(4326)
+p <- st_transform(p, 25830)
+d[, c("x", "y")] <- st_coordinates(p) # new coords in 25830
+
+ind <- st_intersects(m, p) # return a sparse geometry binary predicate 
+d <- d[ind[[1]], ]  # it is a list with just "spain" so we simplify [[]] it
+```
+
+We plot it!
+
+```{r}
+ggplot(m) + geom_sf() + coord_sf(datum = NA) +
+  geom_point(
+    data = d, aes(x = x, y = y, color = value),
+    size = 2
+  ) +
+  labs(x = "", y = "") +
+  scale_color_viridis() +
+  facet_wrap(~year) +
+  theme_bw()
+```
+
+## Modeling!
+
+$Y_{it}$ : $PM_{2.5}$ $i$ are the locations at $t$ times.
+
+$$Y_{it} \sim N(\mu_{it}, \sigma^2_e )$$
+
+$$\mu_{it} = \beta_0  + \xi(\boldsymbol{x}_i, t)$$
+
+$\sigma_2²$ = variance of the measurement error (not correlated in space and time)
+
+$\beta_0$ = intercept
+
+$\xi(\boldsymbol{x}_i, t)$: random effect changes in time first order autoregressive dynamics and spatially correlated innovations
+
+
+$$\xi(\boldsymbol{x}_i, t) = a \xi(\boldsymbol{x}_i, t-1) + w(\boldsymbol{x}_i, t) $$
+
+First part is first order autoregressive process (think $Y_t = \beta_0 + \beta_1 Y_{t-1} + u_t$) and second part is the classic : 
+
+> follows a zero-mean Gaussian distribution temporally independent but spatially dependent at each time with Matérn covariance function.
+
+This is a "simple": we could imagine relation between time and space and had more covariate (temperature, precipitation, etc ...)
+
+### Mesh construction
+
+This is like the previous chapter: 
+
+```{r mesh10}
+
+coo <- cbind(d$x, d$y)
+bnd <- inla.nonconvex.hull(st_coordinates(m)[, 1:2])
+mesh <- inla.mesh.2d(
+  loc = coo, boundary = bnd,
+  max.edge = c(100000, 200000), # huge!
+  cutoff = 1000
+)
+
+plot(mesh)
+points(coo, col = "red")
+```
+
+### SPDE model on the mesh with penalised complexity
+
+Picking prior for range and sigma:
+
+```{r spde2pcmatern}
+spde <- inla.spde2.pcmatern(
+  mesh = mesh, alpha = 2, constr = TRUE, # same as last week
+  prior.range = c(10000, 0.01), # P(range < 10000) = 0.01 / P(range < v_r) = p_r
+  prior.sigma = c(3, 0.01) # P(sigma > 3) = 0.01 / P(sigma > v_s) = p_s
+)
+```
+
+### Index
+
+```{r index10}
+timesn <- length(unique(d$year))
+indexs <- inla.spde.make.index("s",
+  n.spde = spde$n.spde,
+  n.group = timesn
+)
+lengths(indexs) # pay attention to lengthS()
+```
+
+### projection matrix:
+
+```{r projmatrix10}
+group <- d$year - min(d$year) + 1 # we are just creating group similar to index
+A <- inla.spde.make.A(mesh = mesh, loc = coo, 
+                      group = group) # new stuff
+# 299 x 2142 sparse Matrix of class "dgCMatrix"
+```
+
+### Grid:
+
+```{r grid10}
+bb <- st_bbox(m)
+x <- seq(bb$xmin - 1, bb$xmax + 1, length.out = 50) # do not know if i should convert first or not ?
+y <- seq(bb$ymin - 1, bb$ymax + 1, length.out = 50)
+dp <- as.matrix(expand.grid(x, y)) 
+
+p <- st_as_sf(data.frame(x = dp[, 1], y = dp[, 2]),
+  coords = c("x", "y")
+) # this could be a function no ?
+
+st_crs(p) <- st_crs(25830)
+ind <- st_intersects(m, p)
+dp <- dp[ind[[1]], ]
+plot(dp, asp = 1)
+```
+
+We just repeat it 3 times (3 years of data)
+
+```{r}
+dp <- rbind(cbind(dp, 1), cbind(dp, 2), cbind(dp, 3)) # 1,2,3 are recycled
+dim(dp)
+```
+
+### Ap + stack
+
+```{r ap10}
+coop <- dp[, 1:2]
+groupp <- dp[, 3]
+Ap <- inla.spde.make.A(mesh = mesh, loc = coop, group = groupp)
+
+stk.e <- inla.stack(
+  tag = "est",
+  data = list(y = d$value),
+  A = list(1, A),
+  effects = list(data.frame(b0 = rep(1, nrow(d))), s = indexs)
+)
+
+stk.p <- inla.stack(
+  tag = "pred",
+  data = list(y = NA),
+  A = list(1, Ap),
+  effects = list(data.frame(b0 = rep(1, nrow(dp))), s = indexs)
+)
+
+stk.full <- inla.stack(stk.e, stk.p)
+```
+
+
+### Model formula:
+
+This will take a bit of time (around 1 min)! 
+
+```{r modelformulainla}
+rprior <- list(theta = list(prior = "pccor1", param = c(0, 0.9)))
+
+formula <- y ~ 0 + b0 + f(s, #space time
+  model = spde, 
+  group = s.group, # years 
+  control.group = list(model = "ar1", # auto regresive first order
+                       hyper = rprior)
+)
+
+
+res <- inla(formula,
+  data = inla.stack.data(stk.full),
+  control.predictor = list(
+    compute = TRUE,
+    A = inla.stack.A(stk.full)
+  )
+)
+```
+
+
+I have not reproduce the summary of `res` but we have a range around 17857 m (from 14510 to 21721). 
+
+```{r}
+list_marginals <- list(
+"b0" = res$marginals.fixed$b0,
+"precision Gaussian obs" =
+res$marginals.hyperpar$"Precision for the Gaussian observations",
+"range" = res$marginals.hyperpar$"Range for s", # yes this is how they are called inside res
+"stdev" = res$marginals.hyperpar$"Stdev for s",
+"rho" = res$marginals.hyperpar$"GroupRho for s"
+)
+
+
+marginals <- data.frame(do.call(rbind, list_marginals))
+marginals$parameter <- rep(names(list_marginals),
+  times = sapply(list_marginals, nrow))
+ggplot(marginals, aes(x = x, y = y)) + geom_line() +
+  facet_wrap(~parameter, scales = "free") +
+  labs(x = "", y = "Density") + theme_bw()
+
+```
+
+If I am correct rho (and GroupRho) are correlation between group (ie years)
+
+## Mapping
+
+We can do for every year we have data: 
+
+```{r}
+index <- inla.stack.index(stack = stk.full, tag = "pred")$data
+
+dp <- data.frame(dp)
+names(dp) <- c("x", "y", "time") # time is new
+
+dp$pred_mean <- res$summary.fitted.values[index, "mean"]
+dp$pred_ll <- res$summary.fitted.values[index, "0.025quant"]
+dp$pred_ul <- res$summary.fitted.values[index, "0.975quant"]
+
+library(reshape2) # I was to lazy
+dpm <- melt(dp,
+  id.vars = c("x", "y", "time"),
+  measure.vars = c("pred_mean", "pred_ll", "pred_ul")
+)
+
+ggplot(m) + geom_sf() + coord_sf(datum = NA) +
+  geom_tile(data = dpm, aes(x = x, y = y, fill = value)) +
+  labs(x = "", y = "") +
+  facet_wrap(variable ~ time) +
+  scale_fill_viridis("PM2.5") +
+  theme_bw()
+```
+
+## More on space time model:
+
+Here: https://becarioprecario.bitbucket.io/inla-gitbook/ch-temporal.html
 
 ## Meeting Videos
 
