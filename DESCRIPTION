@@ -1,23 +1,22 @@
 Package: bookclub-geohealth
-Title: Geospatial Health Data: Modeling and Visualization with R-INLA and Shiny Book Club
+Title: Geospatial Health Data: Modeling and Visualization with R-INLA and
+    Shiny Book Club
 Version: 0.0.1
-Authors@R: c(
-  person(
-    "R4DS Online Learning Community",
-    email = "rfordatasci@gmail.com",
-    role = c("aut", "cre", "cph")
-  )
-  )
-URL: https://r4ds.github.io/bookclub-geohealth, https://github.com/r4ds/bookclub-geohealth
+Authors@R: 
+    person("R4DS Online Learning Community", , , "rfordatasci@gmail.com", role = c("aut", "cre", "cph"))
+URL: https://r4ds.github.io/bookclub-geohealth,
+    https://github.com/r4ds/bookclub-geohealth
 Depends:
     R (>= 3.1.0)
 Imports: 
     bookdown,
     cholera,
     cowplot,
+    DT,
     gapminder,
     geoR,
     gghighlight (>= 0.4.0),
+    ggplot2,
     graph,
     INLA,
     knitr,
@@ -34,14 +33,18 @@ Imports:
     rgeos,
     Rgraphviz,
     rmarkdown,
+    rnaturalearth,
     sf,
+    sp,
     SpatialEpi,
     SpatialEpiApp (>= 0.5),
     spdep,
     tidyr (>= 1.2.1),
     tidyverse,
     tmap,
-    viridis
-Additional_repositories: https://inla.r-inla-download.org/R/stable/
+    viridis,
+    wbstats
 Remotes: 
     Paula-Moraga/SpatialEpiApp
+Additional_repositories: https://inla.r-inla-download.org/R/stable/
+Encoding: UTF-8
