@@ -35,6 +35,7 @@ Imports:
     rmarkdown,
     rnaturalearth,
     sf,
+    shiny,
     sp,
     SpatialEpi,
     SpatialEpiApp (>= 0.5),
