@@ -239,7 +239,7 @@ stk.full <- inla.stack(stk.e, stk.p)
 
 This will take a bit of time (around 1 min)! 
 
-```{r modelformulainla}
+```{r modelformulainla, eval=FALSE}
 rprior <- list(theta = list(prior = "pccor1", param = c(0, 0.9)))
 
 formula <- y ~ 0 + b0 + f(s, #space time
@@ -262,7 +262,7 @@ res <- inla(formula,
 
 I have not reproduce the summary of `res` but we have a range around 17857 m (from 14510 to 21721). 
 
-```{r}
+```{r, eval=FALSE}
 list_marginals <- list(
 "b0" = res$marginals.fixed$b0,
 "precision Gaussian obs" =
@@ -288,7 +288,7 @@ If I am correct rho (and GroupRho) are correlation between group (ie years)
 
 We can do for every year we have data: 
 
-```{r}
+```{r, eval=FALSE}
 index <- inla.stack.index(stack = stk.full, tag = "pred")$data
 
 dp <- data.frame(dp)
