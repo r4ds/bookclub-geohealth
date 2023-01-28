@@ -2,12 +2,453 @@
 
 **Learning objectives:**
 
-- THESE ARE NICE TO HAVE BUT NOT ABSOLUTELY NECESSARY
+-   How to **fit a geostatistical model to predict malaria prevalence in The Gambia** using the **stochastic partial differential equation (SPDE)** approach and the R-INLA package
+-   How to create a **triangulated mesh** that covers The Gambia, the projection matrix and the data stacks to fit the model
+-   How to **manipulate the results to obtain the malaria prevalence** predictions, and 95% credible intervals denoting uncertainty.
 
-## SLIDE 1
+## Data & data preparation
 
-- ADD SLIDES AS SECTIONS (`##`).
-- TRY TO KEEP THEM RELATIVELY SLIDE-LIKE; THESE ARE NOTES, NOT THE BOOK ITSELF.
+### data
+
+```{r 09-Spatial-modeling-of-geostatistical-data-1, message=FALSE, warning=FALSE, paged.print=FALSE}
+library(geoR)
+data(gambia)
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-2}
+head(gambia)
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-3}
+dim(gambia)
+```
+
+The analysis is done at the village level by aggregating the malaria tests by village.
+
+```{r 09-Spatial-modeling-of-geostatistical-data-4, message=FALSE, warning=FALSE, paged.print=FALSE}
+library(tidyverse)
+
+gambia %>%
+  count(x,y) %>%
+  head()
+```
+
+### Prevalence
+
+Grouping coordinates found 65 locations, or villages were the test were conducted.
+
+```{r 09-Spatial-modeling-of-geostatistical-data-5}
+gambia %>%
+  count(x,y) %>%
+  dim()
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-6}
+d <- gambia %>%
+  group_by(x,y) %>%
+  summarise(total = n(),
+            positive = sum(pos),
+            prev = positive / total,.groups = "drop")
+head(d)
+```
+
+### Transforming coordinates
+
+```{r 09-Spatial-modeling-of-geostatistical-data-7, message=FALSE, warning=FALSE}
+library(sp)
+library(rgdal)
+sps <- SpatialPoints(d[, c("x", "y")],
+  proj4string = CRS("+proj=utm +zone=28")
+)
+spst <- spTransform(sps, CRS("+proj=longlat +datum=WGS84"))
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-8}
+library(sf)
+
+sps <- d %>%
+  st_as_sf(coords=c(1,2),
+           crs = "+proj=utm +zone=28")
+
+sps %>%head()
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-9}
+spst <- sps %>%
+  st_transform(crs = "+proj=longlat +datum=WGS84")
+spst %>%head()
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-10}
+d1 <- spst %>%
+  st_coordinates() %>%
+  bind_cols(d) %>%
+  rename(long=X,lat=Y)
+
+d1 %>% head()
+```
+
+### Mapping prevalence
+
+```{r 09-Spatial-modeling-of-geostatistical-data-11, message=FALSE, warning=FALSE}
+library(leaflet)
+library(viridis)
+
+pal <- colorBin("viridis", 
+                bins = c(0, 0.25, 0.5, 0.75, 1))
+
+d1 %>%
+  leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addCircles(lng = ~long, lat = ~lat, 
+             color = ~ pal(prev)) %>%
+  addLegend("bottomright",
+            pal = pal, values = ~prev,
+            title = "Prev.") %>%
+  addScaleBar(position = c("bottomleft"))
+```
+
+### Environmental covariates
+
+Model malaria prevalence using a covariate that indicates the altitude in The Gambia:
+
+```{r 09-Spatial-modeling-of-geostatistical-data-12, message=FALSE, warning=FALSE}
+library(raster)
+r <- getData(name = "alt", 
+             country = "GMB", 
+             path = "data",
+             mask = TRUE)
+r
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-13}
+pal <- colorNumeric("viridis", 
+                    values(r),
+                    na.color = "transparent")
+
+leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addRasterImage(r, 
+                 colors = pal, 
+                 opacity = 0.5) %>%
+  addLegend("bottomright",
+            pal = pal, 
+            values = values(r),
+            title = "Altitude"
+            ) %>%
+  addScaleBar(position = c("bottomleft"))
+```
+
+Add the altitude:
+
+```{r 09-Spatial-modeling-of-geostatistical-data-14}
+# ?raster::extract
+
+d2 <- d1 %>%
+  mutate(alt = raster::extract(r,
+                               d1[, c("long","lat")]))
+
+d2 %>% head()
+```
+
+## Modeling
+
+Steps to fit the model using the **SPDE approach** and the **R-INLA package**:
+
+$$Y_i|P(x_i)\sim\text{Binomial}(N_i,P(x_i))$$ $$logit(P(x_i))=\beta_0+\beta_1 \text{x altitude + }S(x_i)$$
+
+$$Cov(S(x_i),S(x_j))$$ $K_v(.)$ is the modified **Bessel function**. $v$ is the smoother parameter. $\rho=\sqrt{8v}/k$ is the **distance** where the spatial correlation is close to 0.1.
+
+### Mesh construction
+
+Build a **triangulated mesh** that covers The Gambia:
+
+```{r 09-Spatial-modeling-of-geostatistical-data-15, message=FALSE, warning=FALSE, paged.print=FALSE}
+library(INLA)
+coo <- cbind(d2$long, d2$lat)
+
+
+mesh <- inla.mesh.2d(
+  loc = coo, 
+  max.edge = c(0.1, 5),
+  cutoff = 0.01)
+```
+
+Number of vertices:
+
+```{r 09-Spatial-modeling-of-geostatistical-data-16}
+mesh$n
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-17}
+plot(mesh)
+points(coo, col = "red")
+```
+
+### Building the SPDE model on the mesh
+
+The smoother parameter for the **stochastic partial differential equation SPDE** is $\alpha=v+d/2$ defined by $v=1$ and $d=2$:
+
+    ?inla.spde2.matern
+
+```{r 09-Spatial-modeling-of-geostatistical-data-18}
+spde <- inla.spde2.matern(mesh = mesh, 
+                          alpha = 2, 
+                          constr = TRUE)
+```
+
+### Index set
+
+Index set for the **SPDE model** where $s$ is the effect:
+
+```{r 09-Spatial-modeling-of-geostatistical-data-19}
+indexs <- inla.spde.make.index("s", spde$n.spde)
+lengths(indexs)
+```
+
+### Projection matrix
+
+```{r 09-Spatial-modeling-of-geostatistical-data-20}
+A <- inla.spde.make.A(mesh = mesh, loc = coo)
+```
+
+### Prediction data
+
+Specify the locations where to predict the prevalence:
+
+```{r 09-Spatial-modeling-of-geostatistical-data-21}
+dp <- raster::rasterToPoints(r)
+dim(dp)
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-22}
+ra <- raster::aggregate(r, fact = 5, fun = mean)
+
+dp <- raster::rasterToPoints(ra)
+dim(dp)
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-23}
+coop <- dp[, c("x", "y")]
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-24}
+Ap <- inla.spde.make.A(mesh = mesh, loc = coop)
+```
+
+### Stack with data for estimation and prediction
+
+Construct a **stack for estimation** called `stk.e` and a **stack for prediction** `stk.p`, then put them together in a **full stack** `stk.full`:
+
+```{r 09-Spatial-modeling-of-geostatistical-data-25}
+# stack for estimation stk.e
+stk.e <- inla.stack(
+  tag = "est",
+  data = list(y = d2$positive, 
+              numtrials = d2$total),
+  A = list(1, A),
+  effects = list(data.frame(b0 = 1, 
+                            altitude = d2$alt), 
+                 s = indexs))
+
+# stack for prediction stk.p
+stk.p <- inla.stack(
+  tag = "pred",
+  data = list(y = NA, 
+              numtrials = NA),
+  A = list(1, Ap),
+  effects = list(data.frame(b0 = 1, 
+                            altitude = dp[, 3]),
+                 s = indexs))
+
+# stk.full has stk.e and stk.p
+stk.full <- inla.stack(stk.e, stk.p)
+```
+
+### Model formula
+
+```{r 09-Spatial-modeling-of-geostatistical-data-26}
+formula <- y ~ 0 + b0 + altitude + f(s, model = spde)
+```
+
+    ?inla()
+    ?control.predictor
+
+```{r 09-Spatial-modeling-of-geostatistical-data-27}
+res <- inla(formula,
+  family = "binomial", 
+  Ntrials = numtrials,
+  control.family = list(link = "logit"),
+  data = inla.stack.data(stk.full),
+  control.predictor = list(compute = TRUE, 
+                           link = 1,
+                           A = inla.stack.A(stk.full)))
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-28}
+summary(res)
+```
+
+## Mapping malaria prevalence
+
+```{r 09-Spatial-modeling-of-geostatistical-data-29}
+index <- inla.stack.index(stack = stk.full, 
+                          tag = "pred")$data
+```
+
+
+```{r 09-Spatial-modeling-of-geostatistical-data-30}
+# res$summary.fitted.values
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-31}
+prev_mean <- res$summary.fitted.values[index, "mean"]
+prev_ll <- res$summary.fitted.values[index, "0.025quant"]
+prev_ul <- res$summary.fitted.values[index, "0.975quant"]
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-32}
+pal <- colorNumeric("viridis", c(0, 1), na.color = "transparent")
+
+leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addCircles(
+    lng = coop[, 1], lat = coop[, 2],
+    color = pal(prev_mean)
+  ) %>%
+  addLegend("bottomright",
+    pal = pal, values = prev_mean,
+    title = "Prev."
+  ) %>%
+  addScaleBar(position = c("bottomleft"))
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-33}
+r_prev_mean <- rasterize(
+  x = coop, y = ra, field = prev_mean,
+  fun = mean
+)
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-34}
+pal <- colorNumeric("viridis", c(0, 1), na.color = "transparent")
+
+leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addRasterImage(r_prev_mean, colors = pal, opacity = 0.5) %>%
+  addLegend("bottomright",
+    pal = pal,
+    values = values(r_prev_mean), title = "Prev."
+  ) %>%
+  addScaleBar(position = c("bottomleft"))
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-35}
+r_prev_ll <- rasterize(
+  x = coop, y = ra, 
+  field = prev_ll,
+  fun = mean
+)
+
+leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addRasterImage(r_prev_ll, colors = pal, opacity = 0.5) %>%
+  addLegend("bottomright",
+    pal = pal,
+    values = values(r_prev_ll), title = "LL"
+  ) %>%
+  addScaleBar(position = c("bottomleft"))
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-36}
+r_prev_ul <- rasterize(
+  x = coop, y = ra, field = prev_ul,
+  fun = mean
+)
+
+leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addRasterImage(r_prev_ul, colors = pal, opacity = 0.5) %>%
+  addLegend("bottomright",
+    pal = pal,
+    values = values(r_prev_ul), title = "UL"
+  ) %>%
+  addScaleBar(position = c("bottomleft"))
+```
+
+## Mapping exceedance probabilities
+
+Calculate the **exceedance probabilities of malaria prevalence** being greater than a given threshold value.
+
+$$P(p_1>c)=1-P(p_i\leq c)$$
+
+Once the the marginals are found the **probability that malaria prevalence exceeds 20%** at this location is 0.6931.
+
+How to calculate the marginals?
+
+The **marginal distribution of the predictions** listed in the `res$marginals.fitted.values[index]` are indices of the **stk.full**:
+
+```{r 09-Spatial-modeling-of-geostatistical-data-37}
+index <- inla.stack.index(stack = stk.full, 
+                          tag = "pred")$data
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-38}
+res2 <- inla(formula,
+  family = "binomial", 
+  Ntrials = numtrials,
+  control.family = list(link = "logit"),
+  data = inla.stack.data(stk.full),
+  control.predictor = list(compute = TRUE, 
+                           link = 1,
+                           A = inla.stack.A(stk.full)),
+  control.compute=list(return.marginals.predictor=TRUE))
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-39}
+summary(res2)
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-40}
+# res2$marginals.fitted.values[index]
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-41, eval=FALSE}
+marg <- res2$marginals.fitted.values[index][[1]]
+
+1 - inla.pmarginal(q = 0.20, marginal = marg)
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-42}
+excprob <- sapply(res2$marginals.fitted.values[index],
+                  FUN = function(marg){
+                    1-inla.pmarginal(q = 0.20, 
+                                     marginal = marg)})
+
+head(excprob)
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-43, eval=FALSE}
+r_excprob <- rasterize(
+  x = coop, y = ra, 
+  field = excprob,
+  fun = mean)
+```
+
+```{r 09-Spatial-modeling-of-geostatistical-data-44, eval=FALSE}
+pal <- colorNumeric("viridis", c(0, 1), na.color = "transparent")
+
+leaflet() %>%
+  addProviderTiles(providers$CartoDB.Positron) %>%
+  addRasterImage(r_excprob, colors = pal, opacity = 0.5) %>%
+  addLegend("bottomright",
+    pal = pal,
+    values = values(r_excprob), title = "P(p>0.2)"
+  ) %>%
+  addScaleBar(position = c("bottomleft"))
+```
+
+**END**
 
 ## Meeting Videos
 
@@ -16,9 +457,9 @@
 `r knitr::include_url("https://www.youtube.com/embed/URL")`
 
 <details>
-<summary> Meeting chat log </summary>
 
-```
-LOG
-```
+<summary>Meeting chat log</summary>
+
+    LOG
+
 </details>
