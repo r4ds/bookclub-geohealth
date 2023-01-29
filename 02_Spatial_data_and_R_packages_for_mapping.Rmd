@@ -223,7 +223,7 @@ Consists of a collection of related files that have different extensions and a c
 A shapefile has three mandatory files with extensions .shp, .shx, and .dbf
 
 ```{r 02-Spatial-data-and-R-packages-for-mapping-9}
-knitr::include_graphics("img/02-shp.png")
+knitr::include_graphics("images/02-shp.png")
 ```
 
 
