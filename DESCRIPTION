@@ -17,6 +17,7 @@ Imports:
     geoR,
     gghighlight (>= 0.4.0),
     ggplot2,
+    ggthemes,
     graph,
     INLA,
     knitr,
