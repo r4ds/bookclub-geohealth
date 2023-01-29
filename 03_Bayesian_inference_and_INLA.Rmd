@@ -29,7 +29,7 @@ We need to specify:
 \annotate[yshift=-1em]{below,right}{param}{Parameters (unknown)}
 ```
 
-![Likelihood](figure/figure1-1.vsg)
+![Likelihood](images/figure1-1.vsg)
 
 * a prior distribution:
 
@@ -41,7 +41,7 @@ We need to specify:
 \annotate[yshift=-1em]{below,right}{hyperparam}{Hyperparameters}
 ```
 
-![Prior](figure/figure2-1.vsg)
+![Prior](images/figure2-1.vsg)
 
 Then you have 2 approach :
 
@@ -61,7 +61,7 @@ If we know $\eta$ we can do our inference on $\theta$ using Bayes's Theorem:
 \annotate[yshift=-1em]{below,right}{marglik}{marginal likelihood}
 ```
 
-![Bayes's Theorem](figure/figure3-1.vsg)
+![Bayes's Theorem](images/figure3-1.vsg)
 
 Quick reminder: $P(A\cap B) = P(A|B)P(B)$ 
 
@@ -137,7 +137,7 @@ INLA website: http://www.r-inla.org
 
 I still do not get it!
 
-![](img/im_lost.jpeg)
+![](images/im_lost.jpeg)
 
 It can be used for:  
 
@@ -183,7 +183,7 @@ We are assuming that the mean $\mu_i$ of our observations $Y_i$ can be linked to
 \annotate[yshift=-1em]{below,left}{eff_cov}{linear effects of covariates: $\{\beta_k\}$on response}
 \annotate[yshift=-1em]{below,right}{random_eff}{set $\{f^{j}(.)\}$ of random effects on covariates: $u_{ji}$ }
 ```
-![](figure/figure4-1.vsg)
+![](images/figure4-1.vsg)
 
 $$ (\alpha\{\beta_k\}, \{f^{(j)}\})|\theta \sim N(\mu(\theta), Q(\theta)^{-1}) $$
 

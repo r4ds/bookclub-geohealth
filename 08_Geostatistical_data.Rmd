@@ -86,7 +86,7 @@ $$\hat{\gamma}(h) = \frac{1}{2|N(h)|}\sum_{N(h)}(Z(s_i) - Z(s_j))² $$
 
 The direction of $h$ does not matter only it's length = **isotropy**
 
-![From Ch8](img/semivariogram.png)
+![From Ch8](images/semivariogram.png)
 
 TODO maybe: draw it with R
 
@@ -130,7 +130,7 @@ lines(h, k_1, lty = 3)
 $$Cov(Z(s_i), Z(s_j)) = \frac{\sigma^2}{2^{v-1}\Gamma(v)}(k||s_i - s_j||)^vK_v(k||s_i-s_j||)$$
 $K$ is the *effective range* here define when $\rho = \frac{\sqrt(8)}{k}$ 
 
-![](img/matern.png)
+![](images/matern.png)
 
 TODO: undertand it and `INLA::inla.matern.cov()` 
 
@@ -231,7 +231,7 @@ indexs <- inla.spde.make.index("s", spde$n.spde)
 
 We need to build a matrix that contains n rows (n = number of locations) and m column (m = vertex of triangle).
 
-![](img/triangle_mesh.png)
+![](images/triangle_mesh.png)
 
 ```{r meshmatrix}
 A <- inla.spde.make.A(mesh = mesh, loc = coo)

@@ -19,7 +19,7 @@
 - Dashboards are divided into columns and rows. We can create layouts with multiple columns by using -------------- for each column. Dashboard components are included by using ###. Components include R chunks that contain the code needed to generate the visualizations written between ```{r} and ```. For example, the following code creates a layout with two columns with one and two components, respectively. The width of the columns is specified with the {data-width} attribute.
 
 
-![](img/dashboard-temp.png)
+![](images/dashboard-temp.png)
 
 
 - Layouts can also be specified row-wise rather than column-wise by adding in the YAML the option orientation: rows. Additional layout examples including tabs, multiple pages and sidebars are shown in the [**R Markdown website.**](https://rmarkdown.rstudio.com/flexdashboard/layouts.html)
@@ -51,7 +51,7 @@
 
 - Finally, we create the dashboard by defining the layout and adding the visualizations.
 
-![](img/air-pollution.png)
+![](images/air-pollution.png)
 
 
 ## Data

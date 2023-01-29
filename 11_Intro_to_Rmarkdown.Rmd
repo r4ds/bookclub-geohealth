@@ -55,7 +55,7 @@ you how the key features of R Markdown work.
 
 The basic structure of a R markdown is shown below:
 
-![**rmarkdown_diagram**](img/rmardown doc.png)
+![**rmarkdown_diagram**](images/rmardown doc.png)
 
 
 **Other YAML options include the following:**
@@ -188,12 +188,12 @@ geom_point() +
 Images that are already saved can also be easily included with Markdown syntax. For example, if the image is saved in **path path/img.png**, it can be included in the document using
 
 ```{r,eval=FALSE}
-![**rmarkdown workflow**](img/rmardown diagram.png)
+![**rmarkdown workflow**](images/rmardown diagram.png)
 ```
 
 
 
-![**rmarkdown workflow**](img/rmardown diagram.png)
+![**rmarkdown workflow**](images/rmardown diagram.png)
 
 
 We can also include the image with the include_graphics() function of the knitr package. This allows to specify chunk options. For example, we can include a centered figure that occupies 25% of the document and has caption.

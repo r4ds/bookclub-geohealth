@@ -24,13 +24,13 @@ library(flexdashboard)
 
 -   file \> new file \> R markdown \> From Template \> Flex Dashboard
 
-<center>![](img/ch14_howtoflex.png){width="50%"}</center>
+<center>![](images/ch14_howtoflex.png){width="50%"}</center>
 
 **customize it:**
 
       runtime: shiny
 
-<center>![](img/ch14_customflex.png){width="50%"}</center>
+<center>![](images/ch14_customflex.png){width="50%"}</center>
 
 <center>credits: [article](https://towardsdatascience.com/create-an-interactive-dashboard-with-shiny-flexdashboard-and-plotly-b1f025aebc9c)</center>
 
@@ -58,7 +58,7 @@ This function helps locating the data from the database, we need to specify the 
 list <- wb_cache("en")
 ```
 
-<center>![](img/14_list.png){width=50%}</center>
+<center>![](images/14_list.png){width=50%}</center>
 
 ```{r eval=FALSE}
 indicators <- list$indicators
@@ -165,7 +165,7 @@ pal <- colorBin(
 ```
 
 Our awesome flexdashboard will look like this:
-<center>![](img/myawesomeflex.png)</center>
+<center>![](images/myawesomeflex.png)</center>
 
 
 ## Add some features with Shiny 

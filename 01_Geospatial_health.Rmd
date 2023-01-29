@@ -40,7 +40,7 @@ Author : **Paula Moraga**
   - You have pinned all the link of this book club (planning, github repo, etc)  
   - Do not forget to be kind!
 
-![](img/ch01_slack.jpeg)
+![](images/ch01_slack.jpeg)
 
 ### Using Git and Github 
 
@@ -73,7 +73,7 @@ My workflow:
 
 ### Following the flow 
 
-![](img/ch01_flow.png)
+![](images/ch01_flow.png)
 
 Source: Richard McElreath (http://www.youtube.com/watch?v=zYYBtxHWE0A&t=1180s)
 
