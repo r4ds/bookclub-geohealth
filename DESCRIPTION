@@ -13,6 +13,7 @@ Imports:
     cholera,
     cowplot,
     DT,
+    flexdashboard,
     gapminder,
     geoR,
     gghighlight (>= 0.4.0),
