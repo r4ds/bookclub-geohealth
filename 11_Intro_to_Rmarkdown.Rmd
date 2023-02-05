@@ -225,12 +225,12 @@ Other possible Markdown syntax specifications and R chunks options can be explor
 
 ### Cohort 1
 
-`r knitr::include_url("https://www.youtube.com/embed/URL")`
+`r knitr::include_url("https://www.youtube.com/embed/iHlF2GOq_VI")`
 
-<details>
-<summary> Meeting chat log </summary>
-
+<details><summary> Meeting chat log </summary>
 ```
-LOG
+00:30:06	defuneste:	`r 1+2`
+00:30:11	defuneste:	i think
+00:57:36	defuneste:	rmarkdown::render("Demo.Rmd")
 ```
 </details>

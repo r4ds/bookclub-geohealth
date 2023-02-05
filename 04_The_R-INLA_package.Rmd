@@ -214,12 +214,16 @@ ggplot(marginals, aes(x = x, y = y)) + geom_line() +
 
 ### Cohort 1
 
-`r knitr::include_url("https://www.youtube.com/embed/URL")`
+`r knitr::include_url("https://www.youtube.com/embed/HSI_0CNVGxA")`
 
 <details>
 <summary> Meeting chat log </summary>
 
 ```
-LOG
+00:04:32	Oluwafemi Oyedele:	Hi, Good Evening all !!!
+00:49:34	FedericaG.:	m <- inla.emarginal(function(x) x, marg.variance)
+00:53:02	FedericaG.:	https://rdrr.io/github/andrewzm/INLA/man/marginal.html
+00:55:20	FedericaG.:	# Calculate expected value of x and x^2
+E = inla.emarginal(function(x) c(x,x^2), m)
 ```
 </details>

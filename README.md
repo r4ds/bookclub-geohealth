@@ -10,7 +10,7 @@ As we read, we are producing [notes about the book](https://r4ds.io/geohealth).
 
 If you would like to present, please see the sign-up sheet for your cohort (linked below, and pinned in the [#book_club-geohealth](https://rfordatascience.slack.com/archives/C0410B77DRT) channel on Slack)!
 
-- [Cohort 1](https://docs.google.com/spreadsheets/d/1OD_RurkwgpdapgvEdH252-R8TtimaO7uXuCVjwxAHFE/edit?usp=sharing) (started 2022-09-17): [Saturdays, 10:00 CST/CDT](https://www.timeanddate.com/worldclock/converter.html?iso=20220917T150000&p1=24&p2=179&p3=1440) | [meeting videos](https://youtube.com/playlist?list=PL3x6DOfs2NGhXMiZPIzZiwmMNiAGJLjna)
+- Cohort 1 (ended 2023-02-04): [meeting videos](https://youtube.com/playlist?list=PL3x6DOfs2NGhXMiZPIzZiwmMNiAGJLjna)
 
 <hr>
 

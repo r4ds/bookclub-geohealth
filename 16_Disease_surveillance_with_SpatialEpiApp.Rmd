@@ -13,12 +13,20 @@
 
 ### Cohort 1
 
-`r knitr::include_url("https://www.youtube.com/embed/URL")`
+`r knitr::include_url("https://www.youtube.com/embed/l4M11JCFnrI")`
 
 <details>
 <summary> Meeting chat log </summary>
 
 ```
-LOG
+00:02:23	Oluwafemi Oyedele:	Hi Federica, Good Evening !!!
+00:09:41	Federica Gazzelloni:	Hello!
+00:13:53	Oluwafemi Oyedele:	Can you post the link
+00:36:48	Federica Gazzelloni:	https://www.htmlwidgets.org/
+00:37:45	Federica Gazzelloni:	https://mermaid.live/
+00:38:07	Oluwafemi Oyedele:	Thank you!!!
+00:38:41	Federica Gazzelloni:	https://mastering-shiny.org/basic-app.html
+00:42:23	olivier leroy:	lagging
+00:45:26	Federica Gazzelloni:	For making a mermaid in Rmd use DiagrammeR package: https://www.rdocumentation.org/packages/DiagrammeR/versions/1.0.9/topics/mermaid
 ```
 </details>

@@ -285,12 +285,19 @@ To save the animation:
 
 ### Cohort 1
 
-`r knitr::include_url("https://www.youtube.com/embed/URL")`
+`r knitr::include_url("https://www.youtube.com/embed/-3mKJn8AMZI")`
 
 <details>
 <summary> Meeting chat log </summary>
 
 ```
-LOG
+00:03:08	Olivier Leroy:	https://grass.osgeo.org/
+00:03:49	Olivier Leroy:	https://cran.r-project.org/web/packages/rgrass/index.html
+00:21:21	Olivier Leroy:	https://www.ngs.noaa.gov/datums/horizontal/north-american-datum-1983.shtml
+00:21:24	Olivier Leroy:	a datum
+00:21:46	Olivier Leroy:	ND stands for North American
+00:21:52	Olivier Leroy:	Datum
+00:27:13	Olivier Leroy:	can you try "Lorain" ?
+00:54:21	Olivier Leroy:	https://paulamoraga.shinyapps.io/spatialepiapp/
 ```
 </details>
