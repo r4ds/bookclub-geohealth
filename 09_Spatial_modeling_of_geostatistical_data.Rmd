@@ -454,12 +454,16 @@ leaflet() %>%
 
 ### Cohort 1
 
-`r knitr::include_url("https://www.youtube.com/embed/URL")`
+`r knitr::include_url("https://www.youtube.com/embed/oK8-jMZTEdM")`
 
 <details>
-
 <summary>Meeting chat log</summary>
+```
+00:10:13	Olivier Leroy:	https://missing.csail.mit.edu/2020/version-control/
+00:15:07	Olivier Leroy:	roger bivand lectures : https://www.youtube.com/watch?v=KkIbg50Pa0I&list=PLXUoTpMa_9s10NVk4dBQljNOaOXAOhcE0
+00:50:34	Olivier Leroy:	https://www.rdocumentation.org/packages/raster/versions/3.5-15/topics/aggregate
+00:50:42	Olivier Leroy:	> fact
 
-    LOG
-
+postive integer. Aggregation factor expressed as number of cells in each direction (horizontally and vertically). Or two integers (horizontal and vertical aggregation factor) or three integers (when also aggregating over layers). See Details
+```
 </details>

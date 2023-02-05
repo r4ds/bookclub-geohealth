@@ -320,12 +320,18 @@ Here: https://becarioprecario.bitbucket.io/inla-gitbook/ch-temporal.html
 
 ### Cohort 1
 
-`r knitr::include_url("https://www.youtube.com/embed/URL")`
+`r knitr::include_url("https://www.youtube.com/embed/ZaR89JCjD2M")`
 
 <details>
 <summary> Meeting chat log </summary>
-
 ```
-LOG
+00:06:34	olivier leroy:	https://r-spatial.org/book/
+00:06:57	olivier leroy:	https://r-spatial.org/book/16-SpatialRegression.html
+00:08:26	olivier leroy:	https://www.youtube.com/watch?v=B6mqqBUTSUw&list=PLXUoTpMa_9s10NVk4dBQljNOaOXAOhcE0&index=6
+00:09:16	olivier leroy:	https://www.rdocumentation.org/packages/spatialreg/versions/1.2-6
+00:09:59	olivier leroy:	IDW
+00:50:34	Federica Gazzelloni:	library(sf)
+grid = st_make_grid()
+00:58:48	Federica Gazzelloni:	https://gist.github.com/Fgazzelloni/f10bba45300f25f31f1bc0f9ad3338d6
 ```
 </details>

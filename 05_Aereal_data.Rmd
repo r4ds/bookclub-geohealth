@@ -446,16 +446,22 @@ Things to consider:
 
 ### Cohort 1
 
-`r knitr::include_url("https://www.youtube.com/embed/URL")`
+`r knitr::include_url("https://www.youtube.com/embed/AqCiwVMEwfc")`
 
-<details>
+<details><summary>Meeting chat log</summary>
+```
+01:07:44	defuneste:	https://r-spatial.github.io/spdep/articles/nb.html
+01:08:16	Oluwafemi Oyedele:	Thank you !!!
+```
+</details>
 
-<summary>
+`r knitr::include_url("https://www.youtube.com/embed/k7U0ufIqsys")`
 
-Meeting chat log
-
-</summary>
-
-    LOG
-
+<details><summary>Meeting chat log</summary>
+```
+00:02:40	Oluwafemi Oyedele:	Hi, Good Evening !!!
+00:20:29	Oluwafemi Oyedele:	Can you share the link ?
+00:21:06	Olivier Leroy:	https://stats.stackexchange.com/questions/120964/fixed-effect-vs-random-effect-when-all-possibilities-are-included-in-a-mixed-eff
+00:57:24	Federica Gazzelloni:	pennLC$data$cases[pennLC$data$county=="adams"]
+```
 </details>

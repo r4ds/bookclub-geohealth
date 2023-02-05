@@ -250,12 +250,16 @@ There are two options to share a Shiny app with other users.
 
 ### Cohort 1
 
-`r knitr::include_url("https://www.youtube.com/embed/URL")`
+`r knitr::include_url("https://www.youtube.com/embed/n6mjTbhi3cc")`
 
 <details>
 <summary> Meeting chat log </summary>
 
 ```
-LOG
+00:21:14	olivier leroy:	# This script is used to run the application defined in app.R in the background
+# source : https://github.com/sol-eng/background-jobs/blob/main/shiny-job/shiny-run.R
+options(shiny.autoreload = TRUE)
+shiny::runApp()
+00:44:44	Oluwafemi Oyedele:	https://mastering-shiny.org/
 ```
 </details>

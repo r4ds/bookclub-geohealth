@@ -169,12 +169,14 @@ ggplot(data = map@data, aes(x = PM2.5)) + geom_histogram()
 
 ### Cohort 1
 
-`r knitr::include_url("https://www.youtube.com/embed/URL")`
+`r knitr::include_url("https://www.youtube.com/embed/txfpPYOaKvc")`
 
 <details>
 <summary> Meeting chat log </summary>
-
 ```
-LOG
+00:06:23	olivier leroy:	https://github.com/RamiKrispin/deploy-flex-actions
+00:08:06	olivier leroy:	https://rstudio.github.io/flexdashboard/articles/theme.html
+00:41:03	olivier leroy:	https://rstudio.github.io/crosstalk/
+
 ```
 </details>

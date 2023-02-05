@@ -400,12 +400,13 @@ plot_grid(gmean, gsd)
 
 ### Cohort 1
 
-`r knitr::include_url("https://www.youtube.com/embed/URL")`
+`r knitr::include_url("https://www.youtube.com/embed/2UNlzmC9Dnw")`
 
 <details>
 <summary> Meeting chat log </summary>
 
 ```
-LOG
+00:32:53	Federica Gazzelloni:	Isotropy is uniformity in all orientations: https://en.wikipedia.org/wiki/Isotropy
+01:10:08	Oluwafemi Oyedele:	Thank you, I have to join another meeting now!!!
 ```
 </details>

@@ -112,12 +112,24 @@ c. https://missing.csail.mit.edu/2020/version-control/
 
 ### Cohort 1
 
-`r knitr::include_url("https://www.youtube.com/embed/URL")`
+`r knitr::include_url("https://www.youtube.com/embed/9Koz35bNUUA")`
 
-<details>
-<summary> Meeting chat log </summary>
-
+<details><summary> Meeting chat log </summary>
 ```
-LOG
+00:05:41	defuneste:	https://docs.google.com/spreadsheets/d/1OD_RurkwgpdapgvEdH252-R8TtimaO7uXuCVjwxAHFE/edit#gid=0
+00:06:02	Andrei Wong-Espejo:	Hey
+00:06:11	Peter Macharia:	hi
+00:06:14	Oluwafemi Oyedele:	Hi!!!
+00:06:19	Peter Macharia:	I can hi you all well
+00:06:23	Andrei Wong-Espejo:	I have some issues with my audio. But, can hear you clearly.
+00:06:27	Peter Macharia:	hear*
+00:07:34	Andrei Wong-Espejo:	No worries :) Thank you for doing this!
+00:10:27	defuneste:	https://www.youtube.com/channel/UCCaChdLMTYMxyawR_Qf-kYA
+00:44:20	Andrei Wong-Espejo:	OK
+01:00:43	Andrei Wong-Espejo:	Good start. Thanks for this.
+01:02:11	Andrei Wong-Espejo:	We need to get more people to the group.
+01:02:58	Andrei Wong-Espejo:	Yeah, this is just the 1st try! Merci!!
+01:02:59	Peter Macharia:	thank you
+01:03:05	defuneste:	bye !
 ```
 </details>

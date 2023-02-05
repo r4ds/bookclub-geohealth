@@ -335,19 +335,17 @@ tm_shape(map) + tm_polygons("SID74")
 ```
 
 
-
-
-
 ## Meeting Videos
 
 ### Cohort 1
 
-`r knitr::include_url("https://www.youtube.com/embed/URL")`
+`r knitr::include_url("https://www.youtube.com/embed/J_B47H_2jGU")`
 
 <details>
 <summary> Meeting chat log </summary>
 
 ```
-LOG
+00:40:56	defuneste:	https://ihatecoordinatesystems.com/
+01:11:08	defuneste:	https://geocompr.robinlovelace.net/reproj-geo-data.html#which-crs
 ```
 </details>
