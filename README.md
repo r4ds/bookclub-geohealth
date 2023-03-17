@@ -10,7 +10,7 @@ As we read, we are producing [notes about the book](https://r4ds.io/geohealth).
 
 If you would like to present, please see the sign-up sheet for your cohort (linked below, and pinned in the [#book_club-geohealth](https://rfordatascience.slack.com/archives/C0410B77DRT) channel on Slack)!
 
-- Cohort 1 (ended 2023-02-04): [meeting videos](https://youtube.com/playlist?list=PL3x6DOfs2NGhXMiZPIzZiwmMNiAGJLjna)
+- Cohort 1 (started 2022-09-17, ended 2023-02-04): [meeting videos](https://youtube.com/playlist?list=PL3x6DOfs2NGhXMiZPIzZiwmMNiAGJLjna)
 
 <hr>
 
