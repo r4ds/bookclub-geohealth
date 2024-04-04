@@ -1,14 +1,14 @@
-# R4DS Geospatial Health Data: Modeling and Visualization with R-INLA and Shiny Book Club
+# DSLC Geospatial Health Data: Modeling and Visualization with R-INLA and Shiny Book Club
 
-Welcome to the R4DS Geospatial Health Data: Modeling and Visualization with R-INLA and Shiny Book Club!
+Welcome to the DSLC Geospatial Health Data: Modeling and Visualization with R-INLA and Shiny Book Club!
 
 We are working together to read [_Geospatial Health Data: Modeling and Visualization with R-INLA and Shiny_](https://www.paulamoraga.com/book-geospatial/) by Paula Moraga (Chapman & Hall, copyright 2020, [9780367357955](https://www.routledge.com/Geospatial-Health-Data-Modeling-and-Visualization-with-R-INLA-and-Shiny/Moraga/p/book/9780367357955)).
-Join the [#book_club-geohealth](https://rfordatascience.slack.com/archives/C0410B77DRT) channel on the [R4DS Slack](https://r4ds.io/join) to participate.
-As we read, we are producing [notes about the book](https://r4ds.io/geohealth).
+Join the [#book_club-geohealth](https://dslcio.slack.com/archives/C0410B77DRT) channel on the [DSLC Slack](https://dslc.io/join) to participate.
+As we read, we are producing [notes about the book](https://dslc.io/geohealth).
 
 ## Meeting Schedule
 
-If you would like to present, please see the sign-up sheet for your cohort (linked below, and pinned in the [#book_club-geohealth](https://rfordatascience.slack.com/archives/C0410B77DRT) channel on Slack)!
+If you would like to present, please see the sign-up sheet for your cohort (linked below, and pinned in the [#book_club-geohealth](https://dslcio.slack.com/archives/C0410B77DRT) channel on Slack)!
 
 - Cohort 1 (started 2022-09-17, ended 2023-02-04): [meeting videos](https://youtube.com/playlist?list=PL3x6DOfs2NGhXMiZPIzZiwmMNiAGJLjna)
 
@@ -39,4 +39,4 @@ Do these steps each time you present another chapter:
 10. When your PR has been accepted ("merged"), `usethis::pr_finish()` to close out your branch and prepare your local repository for future work.
 11. Now that your local copy is up-to-date with the main repo, you need to update your remote fork. Run `gert::git_push("origin")` or click the `Push` button on the `Git` tab of Rstudio.
 
-When your PR is checked into the main branch, the bookdown site will rebuild, adding your slides to [this site](https://r4ds.io/geohealth).
+When your PR is checked into the main branch, the bookdown site will rebuild, adding your slides to [this site](https://dslc.io/geohealth).

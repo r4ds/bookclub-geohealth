@@ -3,7 +3,7 @@ Title: Geospatial Health Data: Modeling and Visualization with R-INLA and
     Shiny Book Club
 Version: 0.0.1
 Authors@R: 
-    person("R4DS Online Learning Community", , , "rfordatasci@gmail.com", role = c("aut", "cre", "cph"))
+    person("Data Science Learning Community", , , "rfordatasci@gmail.com", role = c("aut", "cre", "cph"))
 URL: https://r4ds.github.io/bookclub-geohealth,
     https://github.com/r4ds/bookclub-geohealth
 Depends:

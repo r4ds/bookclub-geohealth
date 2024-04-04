@@ -54,7 +54,7 @@ You will have:
 
 - a remote repository in your GH account (linked to your local repository)
 
-- a link with the R4DS `bookclub-geohealth` GH repository 
+- a link with the DSLC `bookclub-geohealth` GH repository 
 
 #### Set up 
 
@@ -63,7 +63,7 @@ You will have:
 3. Having a GitHub (GH) account  
 4. Link GH and Rstudio (optional but make stuff way more easy!)  
 
-Then you can follow R4DS workflow
+Then you can follow DSLC workflow
 
 My workflow: 
 
